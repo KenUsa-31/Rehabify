@@ -14,8 +14,16 @@ A desktop (Tkinter) chatbot that simulates a social media account for a healthca
 | `backend.py` | All AI logic: Ollama client, RAG (TF-IDF + cosine similarity), memory, guardrails, logging |
 | `frontend.py` | Tkinter desktop GUI (social-media messaging window). Run this file. |
 | `knowledge_base.json` | 10 sample knowledge-base entries you can edit/replace |
+| `references.md` | Health and NLP sources used in the knowledge base |
 | `requirements.txt` | Python dependencies |
 | `README.md` | Setup and usage instructions |
+
+## NLP project scope
+
+- **Healthcare domain:** Hospital, subject to instructor approval.
+- **Chatbot:** Gabay simulates a healthcare organization's social media information account in a desktop messaging interface.
+- **Purpose:** General health education and verified facility information, not diagnosis, treatment, or personal medical consultation.
+- **Slides:** The course requires a separate group presentation; slides are not included in this repository.
 
 ## Prerequisites
 
@@ -84,6 +92,9 @@ A desktop (Tkinter) chatbot that simulates a social media account for a healthca
 4. When the user asks a question, the query is transformed into a TF-IDF vector and `cosine_similarity` ranks all chunks.
 5. The top 3 chunks above a similarity threshold are retrieved and injected into the prompt as "RETRIEVED CONTEXT" with their sources.
 
+### Knowledge-base sources and demo data
+Four general-health entries are paraphrased from the World Health Organization and include source URLs in `knowledge_base.json`. The remaining six entries describe hospital operations and are explicitly marked as fictional, unverified placeholders. Replace them with instructor-approved official information before presenting Gabay as representing a real facility. See `references.md` for source details.
+
 ### Memory
 The last 6 user/assistant messages are kept in a short-term memory list and prepended to every prompt so follow-up questions work.
 
@@ -91,7 +102,7 @@ The last 6 user/assistant messages are kept in a short-term memory list and prep
 - **Emergency detection:** English and Filipino emergency phrases trigger a fixed safety message before the model is called.
 - **General questions:** when RAG finds no relevant context, Ollama answers from general knowledge. It does not have live web access, so answers may be incomplete or out of date.
 - **Hospital facts:** Gabay General Hospital-specific details must come from the knowledge base. If the answer is not there, Gabay must say it does not have that information rather than invent a detail.
-- **Health safety:** Gabay must not diagnose or prescribe and includes a disclaimer with health information.
+- **Health safety:** Gabay is an AI general-information assistant, not a doctor or nurse. It does not provide personal consultations, diagnoses, prescriptions, or treatment plans, and adds a disclaimer to health answers.
 
 ### Logging
 Every interaction (timestamp, question, retrieved topics, response, response time in seconds) is appended to `chat_log.csv` for use as testing evidence.

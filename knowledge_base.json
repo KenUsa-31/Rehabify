@@ -1,52 +1,52 @@
 [
   {
-    "topic": "Emergency Services",
-    "content": "For medical emergencies such as chest pain, difficulty breathing, severe bleeding, stroke symptoms, or suicidal thoughts, call your local emergency hotline immediately or go to the nearest hospital emergency department. Do not wait. Our Emergency Department is open 24 hours a day, 7 days a week.",
-    "source": "Gabay General Hospital - Emergency Department"
+    "topic": "Emergency and Critical Care",
+    "content": "The World Health Organization describes emergency care as integrated, time-sensitive care for acute illness and injury. This AI chatbot cannot examine a person or determine how serious symptoms are. For a possible emergency, contact the local emergency number or go to the nearest emergency department immediately. This prototype is configured to mention 911 for the Philippines; verify the correct local number before any real-world use.",
+    "source": "World Health Organization, Emergency and critical care, https://www.who.int/health-topics/emergency-care (accessed 2026-11-07)"
   },
   {
     "topic": "Operating Hours",
-    "content": "Our hospital is open 24/7 for emergency care. Outpatient clinics operate Monday to Friday, 8:00 AM to 5:00 PM, and Saturday, 8:00 AM to 12:00 PM. We are closed on Sundays and public holidays for outpatient services.",
-    "source": "Gabay General Hospital - Administration Office"
+    "content": "DEMO PLACEHOLDER: Gabay General Hospital is a fictional project organization. No verified operating hours are provided. Do not rely on sample schedules; replace this entry with hours approved and published by a real facility before deployment.",
+    "source": "Fictional project placeholder; no real facility source or schedule has been verified."
   },
   {
     "topic": "Location & Address",
-    "content": "Gabay General Hospital is located at 123 Health Avenue, Medical District, Metro Manila, Philippines. You can reach our main line at (02) 8123-4567. Parking is available in the basement and multi-level car park.",
-    "source": "Gabay General Hospital - Public Information"
+    "content": "DEMO PLACEHOLDER: Gabay General Hospital is fictional. It has no verified street address, telephone number, website, or parking information. Do not present an example address or contact number as real; add information only from an official facility source.",
+    "source": "Fictional project placeholder; no real facility location or contact source has been verified."
   },
   {
     "topic": "Services Offered",
-    "content": "We offer a wide range of healthcare services including emergency medicine, internal medicine, pediatrics, cardiology, obstetrics and gynecology, surgery, radiology, laboratory, pharmacy, physical therapy, and mental health services.",
-    "source": "Gabay General Hospital - Services Directory"
+    "content": "DEMO PLACEHOLDER: This project does not have a verified service directory for a real hospital. Hospital departments and available services vary by facility. Do not claim that Gabay General Hospital offers a service unless it appears in an official, approved directory.",
+    "source": "Fictional project placeholder; no real facility directory has been verified."
   },
   {
     "topic": "Appointment Scheduling",
-    "content": "To schedule an appointment, call our patient services line at (02) 8123-4567 ext. 100, or visit our website at www.gabaygeneralhospital.com. Walk-in patients are welcome but appointments are prioritized. Please bring a valid ID and your insurance card if applicable.",
-    "source": "Gabay General Hospital - Patient Services"
+    "content": "DEMO PLACEHOLDER: No verified appointment process, telephone number, website, or walk-in policy is available for this fictional project hospital. Confirm scheduling instructions with the selected real facility and cite its official patient-services page before deployment.",
+    "source": "Fictional project placeholder; no real appointment source has been verified."
   },
   {
     "topic": "Visiting Hours",
-    "content": "Visiting hours are daily from 10:00 AM to 8:00 PM. A maximum of two visitors per patient is allowed at a time. Children under 12 must be accompanied by an adult. Visitors may be restricted in the ICU and isolation rooms.",
-    "source": "Gabay General Hospital - Nursing Services"
+    "content": "DEMO PLACEHOLDER: Visiting hours and visitor rules for Gabay General Hospital have not been verified because the project hospital is fictional. Do not rely on sample visitor limits or times; check the real facility's current official policy.",
+    "source": "Fictional project placeholder; no real visitor policy has been verified."
   },
   {
     "topic": "Insurance & Billing",
-    "content": "We accept PhilHealth and most major HMOs and private insurance plans. For billing inquiries, visit the Billing Office at the ground floor or call (02) 8123-4567 ext. 200. Co-pays are collected upon registration.",
-    "source": "Gabay General Hospital - Billing Office"
+    "content": "DEMO PLACEHOLDER: This project has no verified information about accepted PhilHealth benefits, HMOs, insurance plans, billing contacts, or co-payments. Coverage and charges depend on the facility and the patient's circumstances; confirm directly with official facility and PhilHealth sources.",
+    "source": "Fictional project placeholder; no real billing or coverage policy has been verified."
   },
   {
     "topic": "Vaccinations & Immunizations",
-    "content": "We offer flu vaccines, COVID-19 vaccines and boosters, and routine childhood immunizations. Vaccination clinics are held Monday to Friday, 9:00 AM to 4:00 PM. Walk-ins are welcome, but you may schedule ahead through patient services.",
-    "source": "Gabay General Hospital - Preventive Medicine"
+    "content": "Vaccines reduce the risk of getting infectious diseases by working with the body's natural defenses to build protection. Recommended vaccines and schedules vary by age, health, and local public-health guidance. Ask a qualified healthcare professional or local health authority about personal vaccination decisions; this prototype does not provide a verified clinic schedule.",
+    "source": "World Health Organization, Vaccines and immunization, https://www.who.int/health-topics/vaccines-and-immunization (accessed 2026-11-07)"
   },
   {
     "topic": "Pediatrics / Child Health",
-    "content": "Our Pediatrics Department provides well-child checkups, immunizations, treatment of common childhood illnesses, and newborn care. Pediatric clinic hours are Monday to Saturday, 8:00 AM to 5:00 PM. A pediatrician is on call 24/7 for emergencies.",
-    "source": "Gabay General Hospital - Pediatrics Department"
+    "content": "Protecting and improving children's health is important. The World Health Organization notes that child health depends on access to healthcare as well as nutrition, safety, and supportive conditions for growth and development. This general information does not describe services or hours at a specific hospital and is not personal medical advice.",
+    "source": "World Health Organization, Child health, https://www.who.int/health-topics/child-health (accessed 2026-11-07)"
   },
   {
     "topic": "Cardiology / Heart Health",
-    "content": "Our Cardiology Department offers ECG, echocardiography, stress testing, and consultation for heart conditions such as hypertension, chest pain, and arrhythmias. If you are experiencing chest pain or difficulty breathing, seek emergency care immediately.",
-    "source": "Gabay General Hospital - Cardiology Department"
+    "content": "Cardiovascular diseases are disorders of the heart and blood vessels. The World Health Organization identifies tobacco use, unhealthy diet, physical inactivity, and harmful alcohol use among important behavioral risk factors. Chest pain or difficulty breathing can require urgent assessment; this chatbot cannot diagnose symptoms, so seek emergency care for a possible emergency.",
+    "source": "World Health Organization, Cardiovascular diseases (CVDs), fact sheet, 2025-07-31, https://www.who.int/news-room/fact-sheets/detail/cardiovascular-diseases-(cvds)"
   }
 ]
