@@ -1,5 +1,5 @@
 """
-backend.py - AI logic for Gabay, the 24/7 health guide chatbot.
+backend.py - AI logic for Yakap, the healthcare information assistant.
 
 This module handles everything related to the AI backend:
   * Loading and chunking the knowledge base (knowledge_base.json)
@@ -40,13 +40,13 @@ except ImportError:  # pragma: no cover - handled at runtime with a friendly err
 # Configuration
 # ---------------------------------------------------------------------------
 
-MODEL_NAME = os.environ.get("GABAY_MODEL", "gpt-oss:20b")
+MODEL_NAME = os.environ.get("YAKAP_MODEL", "gpt-oss:20b")
 OLLAMA_OPTIONS = {"num_predict": 192}
 MODEL_KEEP_ALIVE = "30m"
-ORG_NAME = "Gabay General Hospital" # Organization the chatbot represents
-CHATBOT_NAME = "Gabay"
-TAGLINE = "Gabay: your 24/7 health guide"
-HANDLE = "@GabayHealthBot"
+ORG_NAME = "Yakap General Hospital" # Organization the chatbot represents
+CHATBOT_NAME = "Yakap"
+TAGLINE = "Yakap: care that feels close"
+HANDLE = "@YakapCare"
 EMERGENCY_HOTLINE = "911"           # Local emergency hotline (change as needed)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -91,7 +91,7 @@ SAFETY_MESSAGE = (
 ).format(hotline=EMERGENCY_HOTLINE)
 
 DISCLAIMER = (
-    "\n\n---\n*Disclaimer: Gabay is an AI assistant, not a doctor, nurse, or other "
+    "\n\n---\n*Disclaimer: Yakap is an AI assistant, not a doctor, nurse, or other "
     "licensed healthcare professional. This is general educational information, "
     "not a personal medical consultation, diagnosis, or treatment plan. Please "
     "consult a qualified healthcare professional for advice about your situation.*"
@@ -140,7 +140,7 @@ class KnowledgeBase:
         for entry in self.entries:
             topic = entry.get("topic", "General")
             content = entry.get("content", "")
-            source = entry.get("source", "Gabay General Hospital")
+            source = entry.get("source", ORG_NAME)
             for chunk in self._split_into_chunks(content):
                 self.chunks.append({"text": chunk, "topic": topic, "source": source})
 
@@ -178,12 +178,22 @@ class KnowledgeBase:
 # Backend chatbot
 # ---------------------------------------------------------------------------
 
-class GabayBackend:
+class YakapBackend:
     """Main chatbot backend. Combines RAG retrieval, memory, guardrails, and
     Ollama generation into a single conversational interface.
     """
 
-    def __init__(self):
+    def __init__(
+        self,
+        chatbot_name=CHATBOT_NAME,
+        organization_name=ORG_NAME,
+        handle=HANDLE,
+        tagline=TAGLINE,
+    ):
+        self.chatbot_name = chatbot_name
+        self.organization_name = organization_name
+        self.handle = handle
+        self.tagline = tagline
         self.kb = KnowledgeBase(KB_FILE)
         self.memory = []  # list of {"role": "user"/"assistant", "content": str}
         self.lock = threading.Lock()
@@ -202,12 +212,13 @@ class GabayBackend:
     # -- system prompt ----------------------------------------------------
 
     def _build_system_prompt(self):
-        """Detailed system prompt defining Gabay's persona, rules, and disclaimer."""
+        """Build the configured chatbot persona, rules, and disclaimer."""
         return (
-            f"You are {CHATBOT_NAME}, the official social media assistant of {ORG_NAME}. "
-            f"{TAGLINE}. Social media handle: {HANDLE}.\n\n"
+            f"You are {self.chatbot_name}, the official social media assistant of "
+            f"{self.organization_name}. {self.tagline}. Social media handle: "
+            f"{self.handle}.\n\n"
             "PERSONA:\n"
-            "You are warm, friendly, professional, and caring\u2014like a helpful health guide. "
+            "You are a warm, friendly, professional healthcare information assistant. "
             "Speak in a gentle, guide-like tone. Use light emoji use (e.g. \u2705, \u26a0\ufe0f, "
             "\u270d\ufe0f, \u2764\ufe0f) but do not overdo it. Be concise and easy to read, "
             "as users are reading you on social media.\n\n"
@@ -242,7 +253,7 @@ class GabayBackend:
             "relevant."
         ).format(
             hotline=EMERGENCY_HOTLINE,
-            org=ORG_NAME,
+            org=self.organization_name,
             disclaimer=DISCLAIMER.strip("*"),
         )
 
@@ -277,7 +288,7 @@ class GabayBackend:
             f"RETRIEVED CONTEXT (from knowledge base):\n{context}\n\n"
             f"SOURCES: {source_list}\n\n"
             f"USER QUESTION:\n{query}\n\n"
-            "Use retrieved context for Gabay General Hospital-specific facts and cite "
+            "Use retrieved context for Yakap General Hospital-specific facts and cite "
             "its source when relevant. If the context is empty, answer general questions "
             "from your general knowledge, but do not guess hospital-specific facts. "
             "Follow your persona and rules above."
@@ -511,7 +522,7 @@ class GabayBackend:
 # ---------------------------------------------------------------------------
 
 if __name__ == "__main__":
-    bot = GabayBackend()
+    bot = YakapBackend()
     print("Knowledge base chunks indexed:", len(bot.kb.chunks))
     out = bot.get_response("What are your visiting hours?")
     print("Response:", out["response"][:200], "...")

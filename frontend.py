@@ -1,14 +1,14 @@
 """
-frontend.py - Desktop GUI for Gabay, the 24/7 health guide chatbot.
+frontend.py - Desktop GUI for Yakap, the healthcare information assistant.
 
 A Tkinter-based desktop application styled like a social media messaging window.
 Run with:  python frontend.py
 
-It imports GabayBackend from backend.py and handles:
-  * A header with profile picture (colored circle with 'G'), name, handle, online status
-  * Chat bubbles (user on the right, bot on the left) with timestamps
+It imports YakapBackend from backend.py and handles:
+    * A themed healthcare profile mark, account name, handle, and online status
+    * Chat bubbles (user on the right, Yakap on the left) with timestamps
   * Scrollable chat area, message input box, Send button, Enter-to-send
-  * 'Gabay is typing...' indicator while the model generates
+    * 'Yakap is typing...' indicator while the model generates
   * Quick-reply buttons for common questions
   * Clear chat button
   * Model calls run in a background thread so the window never freezes
@@ -30,25 +30,31 @@ except ModuleNotFoundError as exc:
     ) from exc
 
 try:
-    from backend import GabayBackend, CHATBOT_NAME, TAGLINE, HANDLE
+    from backend import YakapBackend, CHATBOT_NAME, ORG_NAME, TAGLINE, HANDLE
 except ImportError as exc:  # pragma: no cover
     raise SystemExit(f"Could not import backend.py: {exc}")
 
 
 # ---------------------------------------------------------------------------
-# Theme / color palette (healthcare teal + white)
+# Themes
 # ---------------------------------------------------------------------------
 
-BG_COLOR = "#edf4f2"
-HEADER_COLOR = "#145b5b"
-HEADER_TEXT = "#f7fffd"
-BUBBLE_USER = "#d8f2e9"
-BUBBLE_BOT = "#ffffff"
-BUBBLE_BOT_BORDER = "#d8e6e2"
-TEXT_DARK = "#183536"
-TEXT_MUTED = "#6c8583"
-ACCENT_TEAL = "#087f78"
-ACCENT_HOVER = "#066b66"
+THEME = {
+    "bg": "#f3f5f2",
+    "header": "#382a3c",
+    "header_text": "#fffdfd",
+    "user_bubble": "#dcefe9",
+    "bot_bubble": "#ffffff",
+    "bubble_border": "#d8e1dc",
+    "text": "#283a37",
+    "muted": "#71817c",
+    "accent": "#b24f70",
+    "accent_hover": "#963b5a",
+    "logo_bg": "#f8e3ea",
+    "logo_mark": "#8e3450",
+    "online": "#a6e2c0",
+    "mark": "heart",
+}
 FONT_FAMILY = "TkDefaultFont"
 
 
@@ -57,40 +63,54 @@ FONT_FAMILY = "TkDefaultFont"
 # ---------------------------------------------------------------------------
 
 class ProfileCircle(tk.Canvas):
-    """A small colored circle with the letter 'G' acting as a profile picture."""
+    """A small themed health mark used as the account profile picture."""
 
-    def __init__(self, parent, size=40, **kwargs):
+    def __init__(self, parent, theme=None, size=46, **kwargs):
+        self.theme = theme or THEME
         super().__init__(parent, width=size, height=size,
-                         highlightthickness=0, bg=HEADER_COLOR, **kwargs)
+                         highlightthickness=0, bg=self.theme["header"], **kwargs)
         self.size = size
         self._draw()
 
     def _draw(self):
         s = self.size
-        self.create_oval(2, 2, s - 2, s - 2, fill="#d8f2e9", outline="")
-        self.create_oval(11, 8, 16, 13, fill=HEADER_COLOR, outline="")
-        self.create_oval(30, 8, 35, 13, fill=HEADER_COLOR, outline="")
+        mark_color = self.theme["logo_mark"]
+        self.create_oval(2, 2, s - 2, s - 2, fill=self.theme["logo_bg"], outline="")
+        if self.theme["mark"] == "heart":
+            self.create_polygon(
+                23, 36, 9, 23, 8, 17, 11, 11, 17, 9, 23, 15,
+                29, 9, 35, 11, 38, 17, 37, 23,
+                fill=mark_color, outline="", smooth=True,
+            )
+            self.create_text(23, 22, text="+", fill="#ffffff",
+                             font=(FONT_FAMILY, 12, "bold"))
+            return
+
+        self.create_oval(11, 8, 16, 13, fill=mark_color, outline="")
+        self.create_oval(30, 8, 35, 13, fill=mark_color, outline="")
         self.create_line(
             13.5, 11, 13.5, 19, 17, 24, 22, 27, 24, 27,
             29, 24, 32.5, 19, 32.5, 11,
-            smooth=True, splinesteps=16, fill=HEADER_COLOR, width=2.5,
+            smooth=True, splinesteps=16, fill=mark_color, width=2.5,
         )
-        self.create_line(24, 27, 24, 32, 29, 34, fill=HEADER_COLOR, width=2.5)
-        self.create_oval(28, 32, 35, 39, fill=HEADER_COLOR, outline="")
-        self.create_oval(31, 31, 44, 44, fill="#ffffff", outline="#d8e6e2")
-        self.create_text(37.5, 37.5, text="+", fill=ACCENT_TEAL,
+        self.create_line(24, 27, 24, 32, 29, 34, fill=mark_color, width=2.5)
+        self.create_oval(28, 32, 35, 39, fill=mark_color, outline="")
+        self.create_oval(31, 31, 44, 44, fill="#ffffff",
+                         outline=self.theme["bubble_border"])
+        self.create_text(37.5, 37.5, text="+", fill=self.theme["accent"],
                          font=(FONT_FAMILY, 10, "bold"))
 
 
 class ChatBubble(tk.Frame):
     """A single chat bubble with message text and timestamp."""
 
-    def __init__(self, parent, message, timestamp, is_user, **kwargs):
-        super().__init__(parent, bg=BG_COLOR, **kwargs)
+    def __init__(self, parent, message, timestamp, is_user, theme=None, **kwargs):
+        self.theme = theme or THEME
+        super().__init__(parent, bg=self.theme["bg"], **kwargs)
         self.is_user = is_user
 
-        bubble_bg = BUBBLE_USER if is_user else BUBBLE_BOT
-        text_color = TEXT_DARK
+        bubble_bg = self.theme["user_bubble"] if is_user else self.theme["bot_bubble"]
+        text_color = self.theme["text"]
         anchor = "e" if is_user else "w"
         padx = (48, 12) if is_user else (12, 48)
 
@@ -98,33 +118,44 @@ class ChatBubble(tk.Frame):
         self.bubble = tk.Frame(self, bg=bubble_bg, bd=0, highlightthickness=0)
         self.bubble.pack(anchor=anchor, padx=padx, pady=(4, 0))
 
+        tk.Label(
+            self.bubble,
+            text="YOU" if is_user else "YAKAP",
+            bg=bubble_bg,
+            fg=self.theme["text"] if is_user else self.theme["accent"],
+            font=(FONT_FAMILY, 8, "bold"),
+        ).pack(anchor="w", padx=13, pady=(8, 0))
+
         self.msg_label = tk.Label(
             self.bubble, text=message, bg=bubble_bg, fg=text_color,
             font=(FONT_FAMILY, 10), justify=tk.LEFT, wraplength=280,
-            padx=13, pady=10, anchor="w",
+            padx=13, pady=4, anchor="w",
         )
         self.msg_label.pack()
 
         # Bot bubbles get a thin border effect by wrapping bg frame
         if not is_user:
-            self.bubble.config(highlightbackground=BUBBLE_BOT_BORDER,
+            self.bubble.config(highlightbackground=self.theme["bubble_border"],
                                highlightthickness=1)
 
         # Timestamp below the bubble
         self.time_label = tk.Label(
-            self, text=timestamp, bg=BG_COLOR, fg=TEXT_MUTED,
+            self, text=timestamp, bg=self.theme["bg"], fg=self.theme["muted"],
             font=(FONT_FAMILY, 8),
         )
         self.time_label.pack(anchor=anchor, padx=padx, pady=(2, 5))
 
 
 class TypingIndicator(tk.Frame):
-    """'Gabay is typing...' indicator shown while the model generates."""
+    """'Yakap is typing...' indicator shown while the model generates."""
 
-    def __init__(self, parent, **kwargs):
-        super().__init__(parent, bg=BG_COLOR, **kwargs)
+    def __init__(self, parent, chatbot_name=CHATBOT_NAME, theme=None, **kwargs):
+        self.chatbot_name = chatbot_name
+        self.theme = theme or THEME
+        super().__init__(parent, bg=self.theme["bg"], **kwargs)
         self.label = tk.Label(
-            self, text="Gabay is typing", bg=BG_COLOR, fg=ACCENT_TEAL,
+            self, text=f"{self.chatbot_name} is typing", bg=self.theme["bg"],
+            fg=self.theme["accent"],
             font=(FONT_FAMILY, 9),
         )
         self.label.pack(anchor="w", padx=18, pady=(2, 4))
@@ -148,7 +179,7 @@ class TypingIndicator(tk.Frame):
         if not self._running:
             return
         self.dots = (self.dots % 3) + 1
-        self.label.config(text="Gabay is typing" + "." * self.dots)
+        self.label.config(text=f"{self.chatbot_name} is typing" + "." * self.dots)
         self._job = self.after(500, self._animate)
 
 
@@ -156,15 +187,33 @@ class TypingIndicator(tk.Frame):
 # Main application
 # ---------------------------------------------------------------------------
 
-class GabayApp:
-    def __init__(self, root):
+class YakapApp:
+    def __init__(
+        self,
+        root,
+        chatbot_name=CHATBOT_NAME,
+        organization_name=ORG_NAME,
+        tagline=TAGLINE,
+        handle=HANDLE,
+        theme=None,
+    ):
         self.root = root
-        self.root.title(f"{CHATBOT_NAME} - {HANDLE}")
+        self.chatbot_name = chatbot_name
+        self.organization_name = organization_name
+        self.tagline = tagline
+        self.handle = handle
+        self.theme = theme or THEME
+        self.root.title(f"{self.chatbot_name} - {self.handle}")
         self.root.geometry("460x760")
         self.root.minsize(410, 640)
-        self.root.configure(bg=BG_COLOR)
+        self.root.configure(bg=self.theme["bg"])
 
-        self.backend = GabayBackend()
+        self.backend = YakapBackend(
+            chatbot_name=self.chatbot_name,
+            organization_name=self.organization_name,
+            handle=self.handle,
+            tagline=self.tagline,
+        )
         self._stream_job = None  # holds after() id for word-by-word streaming
         self._stream_words = []  # remaining words to stream
         self._stream_index = 0
@@ -175,56 +224,77 @@ class GabayApp:
     # -- UI construction --------------------------------------------------
 
     def _build_ui(self):
-        header = tk.Frame(self.root, bg=HEADER_COLOR, height=112)
-        header.pack(fill=tk.X)
-        header.pack_propagate(False)
+        theme = self.theme
+        header = tk.Frame(self.root, bg=theme["bg"])
+        header.pack(fill=tk.X, padx=14, pady=(14, 4))
 
-        prof = ProfileCircle(header, size=46)
-        prof.pack(side=tk.LEFT, padx=(18, 12), pady=30)
+        profile_card = tk.Frame(header, bg=theme["header"], height=96)
+        profile_card.pack(fill=tk.X)
+        profile_card.pack_propagate(False)
 
-        info = tk.Frame(header, bg=HEADER_COLOR)
-        info.pack(side=tk.LEFT, fill=tk.Y, expand=True, padx=(0, 10))
+        prof = ProfileCircle(profile_card, theme=theme, size=54)
+        prof.pack(side=tk.LEFT, padx=(16, 13), pady=20)
 
+        info = tk.Frame(profile_card, bg=theme["header"])
+        info.pack(side=tk.LEFT, fill=tk.Y, expand=True, pady=(12, 8))
         tk.Label(
-            info, text=CHATBOT_NAME, bg=HEADER_COLOR, fg=HEADER_TEXT,
-            font=(FONT_FAMILY, 17, "bold"),
-        ).pack(anchor="w", pady=(10, 0))
+            info, text="YAKAP CARE DESK", bg=theme["header"],
+            fg="#f0cbd7", font=(FONT_FAMILY, 8, "bold"),
+        ).pack(anchor="w")
         tk.Label(
-            info, text=HANDLE, bg=HEADER_COLOR, fg="#c5e4df",
-            font=(FONT_FAMILY, 10),
-        ).pack(anchor="w", pady=(0, 2))
+            info, text=self.chatbot_name, bg=theme["header"],
+            fg=theme["header_text"], font=(FONT_FAMILY, 20, "bold"),
+        ).pack(anchor="w", pady=(1, 0))
         tk.Label(
-            info, text="\u25cf Online  \u00b7  24/7 health guide",
-            bg=HEADER_COLOR, fg="#c5e4df", font=(FONT_FAMILY, 9),
-        ).pack(anchor="w", pady=(0, 2))
-        tk.Label(
-            info, text=TAGLINE, bg=HEADER_COLOR, fg="#e2f1ed",
+            info, text=f"{self.handle}  \u00b7  Online",
+            bg=theme["header"], fg=theme["online"],
             font=(FONT_FAMILY, 9),
         ).pack(anchor="w")
 
-        quick = tk.Frame(self.root, bg=BG_COLOR)
-        quick.pack(fill=tk.X, padx=12, pady=(10, 2))
+        tagline_bar = tk.Frame(
+            header, bg=theme["bot_bubble"],
+            highlightbackground=theme["bubble_border"], highlightthickness=1,
+        )
+        tagline_bar.pack(fill=tk.X)
+        tk.Label(
+            tagline_bar, text=self.tagline, bg=theme["bot_bubble"],
+            fg=theme["accent"], font=(FONT_FAMILY, 10, "bold"),
+        ).pack(anchor="w", padx=14, pady=9)
+
+        quick = tk.Frame(self.root, bg=theme["bg"])
+        quick.pack(fill=tk.X, padx=14, pady=(9, 3))
+        tk.Label(
+            quick, text="START WITH A TOPIC", bg=theme["bg"],
+            fg=theme["muted"], font=(FONT_FAMILY, 8, "bold"),
+        ).grid(row=0, column=0, columnspan=2, sticky="w", pady=(0, 6))
         self.quick_buttons = []
-        for column, label in enumerate(["Services", "Schedule", "Location", "Emergency"]):
+        topics = ["Hospital services", "Hours & schedule", "Location", "Emergency help"]
+        for column in range(2):
             quick.grid_columnconfigure(column, weight=1, uniform="quick-replies")
+        for index, label in enumerate(topics):
+            row, column = divmod(index, 2)
             button = tk.Button(
-                quick, text=label, bg=ACCENT_TEAL, fg=HEADER_TEXT,
-                font=(FONT_FAMILY, 9, "bold"), bd=0, padx=4, pady=8,
-                cursor="hand2", activebackground=ACCENT_HOVER,
-                activeforeground=HEADER_TEXT,
+                quick, text=label, bg=theme["bot_bubble"], fg=theme["text"],
+                font=(FONT_FAMILY, 9, "bold"), bd=0, padx=8, pady=9,
+                highlightbackground=theme["bubble_border"], highlightthickness=1,
+                cursor="hand2", activebackground=theme["user_bubble"],
+                activeforeground=theme["text"],
                 command=lambda value=label: self._send_quick(value),
             )
-            button.grid(row=0, column=column, sticky="ew", padx=(0, 6 if column < 3 else 0))
+            button.grid(
+                row=row + 1, column=column, sticky="ew",
+                padx=(0, 6) if column == 0 else (6, 0), pady=3,
+            )
             self.quick_buttons.append(button)
 
-        chat_container = tk.Frame(self.root, bg=BG_COLOR)
-        chat_container.pack(fill=tk.BOTH, expand=True, padx=10, pady=(5, 2))
+        chat_container = tk.Frame(self.root, bg=theme["bg"])
+        chat_container.pack(fill=tk.BOTH, expand=True, padx=12, pady=(4, 2))
 
-        self.canvas = tk.Canvas(chat_container, bg=BG_COLOR, highlightthickness=0)
+        self.canvas = tk.Canvas(chat_container, bg=theme["bg"], highlightthickness=0)
         self.scrollbar = ttk.Scrollbar(
             chat_container, orient="vertical", command=self.canvas.yview
         )
-        self.chat_frame = tk.Frame(self.canvas, bg=BG_COLOR)
+        self.chat_frame = tk.Frame(self.canvas, bg=theme["bg"])
         self.chat_frame.bind(
             "<Configure>",
             lambda event: self.canvas.configure(scrollregion=self.canvas.bbox("all")),
@@ -240,35 +310,37 @@ class GabayApp:
         self.canvas.bind_all("<Button-4>", lambda event: self.canvas.yview_scroll(-1, "units"))
         self.canvas.bind_all("<Button-5>", lambda event: self.canvas.yview_scroll(1, "units"))
 
-        self.typing = TypingIndicator(self.root)
+        self.typing = TypingIndicator(
+            self.root, chatbot_name=self.chatbot_name, theme=theme
+        )
 
-        input_frame = tk.Frame(self.root, bg=BG_COLOR)
+        input_frame = tk.Frame(self.root, bg=theme["bg"])
         input_frame.pack(fill=tk.X, padx=12, pady=(4, 12))
         composer = tk.Frame(
-            input_frame, bg=BUBBLE_BOT, highlightbackground=BUBBLE_BOT_BORDER,
+            input_frame, bg=theme["bot_bubble"], highlightbackground=theme["bubble_border"],
             highlightthickness=1,
         )
         composer.pack(fill=tk.X)
 
         self.entry = tk.Entry(
             composer, font=(FONT_FAMILY, 11), bd=0, relief=tk.FLAT,
-            bg=BUBBLE_BOT, fg=TEXT_DARK, insertbackground=ACCENT_TEAL,
+            bg=theme["bot_bubble"], fg=theme["text"], insertbackground=theme["accent"],
         )
         self.entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(12, 6), ipady=11)
         self.entry.bind("<Return>", lambda event: self._send_message())
 
         self.send_button = tk.Button(
-            composer, text="Send", bg=ACCENT_TEAL, fg=HEADER_TEXT,
+            composer, text="Send", bg=theme["accent"], fg=theme["header_text"],
             font=(FONT_FAMILY, 10, "bold"), bd=0, padx=17, pady=9,
-            cursor="hand2", activebackground=ACCENT_HOVER,
-            activeforeground=HEADER_TEXT, command=self._send_message,
+            cursor="hand2", activebackground=theme["accent_hover"],
+            activeforeground=theme["header_text"], command=self._send_message,
         )
         self.send_button.pack(side=tk.RIGHT, padx=5, pady=5)
 
         self.clear_button = tk.Button(
-            input_frame, text="Clear chat", bg=BG_COLOR, fg=TEXT_MUTED,
+            input_frame, text="Clear chat", bg=theme["bg"], fg=theme["muted"],
             font=(FONT_FAMILY, 9), bd=0, padx=8, pady=5, cursor="hand2",
-            activebackground=BG_COLOR, activeforeground=TEXT_DARK,
+            activebackground=theme["bg"], activeforeground=theme["text"],
             command=self._clear_chat,
         )
         self.clear_button.pack(anchor="e", pady=(4, 0))
@@ -278,16 +350,20 @@ class GabayApp:
 
     def _add_welcome_message(self):
         welcome = (
-            "Hello! I'm Gabay, your 24/7 health guide from Gabay General Hospital "
-            "({handle}).\n\nI can help you with our services, clinic schedule, "
-            "location, appointments, visiting hours, and general health information.\n\n"
+            f"Hello! I'm {self.chatbot_name}, the healthcare information assistant "
+            f"for {self.organization_name} ({self.handle}).\n\n"
+            "I can help with "
+            "verified hospital information and general health "
+            "education. I cannot diagnose or provide personal medical consultation.\n\n"
             "\u26a0\ufe0f If you're having a medical emergency, please call 911 or go "
             "to the nearest hospital immediately."
-        ).format(handle=HANDLE)
+        )
         self._add_bot_message(welcome, animate=False)
 
     def _add_bubble(self, message, timestamp, is_user, animate=False):
-        bubble = ChatBubble(self.chat_frame, message, timestamp, is_user)
+        bubble = ChatBubble(
+            self.chat_frame, message, timestamp, is_user, theme=self.theme
+        )
         bubble.pack(anchor="e" if is_user else "w", fill=tk.X, pady=2)
         self._scroll_to_bottom()
         return bubble
@@ -360,7 +436,7 @@ class GabayApp:
 
     def _create_stream_bubble(self, ts):
         """Create an empty bot bubble that we append streamed text into."""
-        bubble = _StreamableBubble(self.chat_frame, "", ts)
+        bubble = _StreamableBubble(self.chat_frame, "", ts, theme=self.theme)
         bubble.pack(anchor="w", fill=tk.X, pady=2)
         self._scroll_to_bottom()
         return bubble
@@ -393,24 +469,31 @@ class GabayApp:
 class _StreamableBubble(tk.Frame):
     """A bot bubble whose text can be appended to during streaming."""
 
-    def __init__(self, parent, message, timestamp, **kwargs):
-        super().__init__(parent, bg=BG_COLOR, **kwargs)
+    def __init__(self, parent, message, timestamp, theme=None, **kwargs):
+        self.theme = theme or THEME
+        super().__init__(parent, bg=self.theme["bg"], **kwargs)
         self.timestamp = timestamp
 
-        self.bubble = tk.Frame(self, bg=BUBBLE_BOT, bd=0,
-                               highlightbackground=BUBBLE_BOT_BORDER,
+        self.bubble = tk.Frame(self, bg=self.theme["bot_bubble"], bd=0,
+                               highlightbackground=self.theme["bubble_border"],
                                highlightthickness=1)
         self.bubble.pack(anchor="w", padx=(10, 60), pady=(4, 0))
 
+        tk.Label(
+            self.bubble, text="YAKAP", bg=self.theme["bot_bubble"],
+            fg=self.theme["accent"], font=(FONT_FAMILY, 8, "bold"),
+        ).pack(anchor="w", padx=13, pady=(8, 0))
+
         self.msg_label = tk.Label(
-            self.bubble, text=message, bg=BUBBLE_BOT, fg=TEXT_DARK,
+            self.bubble, text=message, bg=self.theme["bot_bubble"],
+            fg=self.theme["text"],
             font=(FONT_FAMILY, 10), justify=tk.LEFT, wraplength=280,
-            padx=12, pady=8, anchor="w",
+            padx=13, pady=4, anchor="w",
         )
         self.msg_label.pack()
 
         self.time_label = tk.Label(
-            self, text=timestamp, bg=BG_COLOR, fg=TEXT_MUTED,
+            self, text=timestamp, bg=self.theme["bg"], fg=self.theme["muted"],
             font=(FONT_FAMILY, 8),
         )
         self.time_label.pack(anchor="w", padx=(10, 60), pady=(0, 6))
@@ -425,13 +508,11 @@ class _StreamableBubble(tk.Frame):
 # ---------------------------------------------------------------------------
 
 if __name__ == "__main__":
-    # Make imports work when run directly from the Gabay folder.
+    # Make imports work when run directly from the Yakap folder.
     import sys
     import os
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-    from backend import CHATBOT_NAME, HANDLE  # noqa: E402  (for title only)
-
     root = tk.Tk()
-    app = GabayApp(root)
+    app = YakapApp(root)
     app.run()

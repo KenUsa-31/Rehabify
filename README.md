@@ -1,18 +1,18 @@
-# Gabay - Desktop Health Guide Chatbot
+# Yakap - Healthcare Information Assistant
 
 A desktop (Tkinter) chatbot that simulates a social media account for a healthcare organization. Built for an Artificial Intelligence course project.
 
-**Chatbot name:** Gabay
-**Tagline:** Gabay: your 24/7 health guide
-**Handle:** @GabayHealthBot
-**Organization:** Gabay General Hospital
+**Chatbot name:** Yakap
+**Tagline:** Yakap: care that feels close
+**Handle:** @YakapCare
+**Organization:** Yakap General Hospital
 
 ## Project structure
 
 | File | Purpose |
 |------|---------|
 | `backend.py` | All AI logic: Ollama client, RAG (TF-IDF + cosine similarity), memory, guardrails, logging |
-| `frontend.py` | Tkinter desktop GUI (social-media messaging window). Run this file. |
+| `frontend.py` | Yakap desktop chat interface; run with `python3 frontend.py`. |
 | `knowledge_base.json` | 10 sample knowledge-base entries you can edit/replace |
 | `references.md` | Health and NLP sources used in the knowledge base |
 | `requirements.txt` | Python dependencies |
@@ -21,7 +21,7 @@ A desktop (Tkinter) chatbot that simulates a social media account for a healthca
 ## NLP project scope
 
 - **Healthcare domain:** Hospital, subject to instructor approval.
-- **Chatbot:** Gabay simulates a healthcare organization's social media information account in a desktop messaging interface.
+- **Chatbot:** Yakap simulates a healthcare organization's social media information account in a desktop messaging interface.
 - **Purpose:** General health education and verified facility information, not diagnosis, treatment, or personal medical consultation.
 - **Slides:** The course requires a separate group presentation; slides are not included in this repository.
 
@@ -36,8 +36,8 @@ A desktop (Tkinter) chatbot that simulates a social media account for a healthca
 1. **Clone the repository:**
 
    ```bash
-   git clone https://github.com/KenUsa-31/HealthBot.git
-   cd HealthBot
+   git clone https://github.com/KenUsa-31/Yakap-HealthCareBot.git Yakap
+   cd Yakap
    ```
 
 2. **Install Ollama** (if not already installed): https://ollama.com
@@ -76,7 +76,7 @@ A desktop (Tkinter) chatbot that simulates a social media account for a healthca
    For faster replies, use the smaller model already installed on some setups:
 
    ```bash
-   GABAY_MODEL=llama3.2:1b python3 frontend.py
+   YAKAP_MODEL=llama3.2:1b python3 frontend.py
    ```
 
    The smaller model responds faster but may give less detailed answers. The
@@ -93,7 +93,7 @@ A desktop (Tkinter) chatbot that simulates a social media account for a healthca
 5. The top 3 chunks above a similarity threshold are retrieved and injected into the prompt as "RETRIEVED CONTEXT" with their sources.
 
 ### Knowledge-base sources and demo data
-Four general-health entries are paraphrased from the World Health Organization and include source URLs in `knowledge_base.json`. The remaining six entries describe hospital operations and are explicitly marked as fictional, unverified placeholders. Replace them with instructor-approved official information before presenting Gabay as representing a real facility. See `references.md` for source details.
+Four general-health entries are paraphrased from the World Health Organization and include source URLs in `knowledge_base.json`. The remaining six entries describe hospital operations and are explicitly marked as fictional, unverified placeholders. Replace them with instructor-approved official information before presenting Yakap as representing a real facility. See `references.md` for source details.
 
 ### Memory
 The last 6 user/assistant messages are kept in a short-term memory list and prepended to every prompt so follow-up questions work.
@@ -101,8 +101,8 @@ The last 6 user/assistant messages are kept in a short-term memory list and prep
 ### Guardrails
 - **Emergency detection:** English and Filipino emergency phrases trigger a fixed safety message before the model is called.
 - **General questions:** when RAG finds no relevant context, Ollama answers from general knowledge. It does not have live web access, so answers may be incomplete or out of date.
-- **Hospital facts:** Gabay General Hospital-specific details must come from the knowledge base. If the answer is not there, Gabay must say it does not have that information rather than invent a detail.
-- **Health safety:** Gabay is an AI general-information assistant, not a doctor or nurse. It does not provide personal consultations, diagnoses, prescriptions, or treatment plans, and adds a disclaimer to health answers.
+- **Hospital facts:** Yakap General Hospital-specific details must come from the knowledge base. If the answer is not there, Yakap must say it does not have that information rather than invent a detail.
+- **Health safety:** Yakap is an AI general-information assistant, not a doctor or nurse. It does not provide personal consultations, diagnoses, prescriptions, or treatment plans, and adds a disclaimer to health answers.
 
 ### Logging
 Every interaction (timestamp, question, retrieved topics, response, response time in seconds) is appended to `chat_log.csv` for use as testing evidence.
@@ -129,6 +129,6 @@ Use these to evaluate the chatbot (hospital facts, health safety, emergencies, a
 
 ## Notes
 
-- The model defaults to `gpt-oss:20b`. Override it at launch with the `GABAY_MODEL` environment variable.
+- The model defaults to `gpt-oss:20b`. Override it at launch with the `YAKAP_MODEL` environment variable.
 - Edit `knowledge_base.json` to add or replace hospital-specific information.
 - `chat_log.csv` is created automatically after the first conversation.
