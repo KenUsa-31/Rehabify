@@ -3,6 +3,14 @@
 import json
 import os
 
+try:
+	from dotenv import load_dotenv
+except ImportError:  # pragma: no cover - optional dependency for local env files
+	load_dotenv = None
+
+if load_dotenv is not None:
+	load_dotenv()
+
 from flask import (
 	Flask,
 	Response,
