@@ -60,7 +60,7 @@ KB_FILE = os.path.join(BASE_DIR, "knowledge_base.json")
 LOG_FILE = os.path.join(BASE_DIR, "chat_log.csv")
 
 MEMORY_SIZE = 6                     # Number of past messages to keep in memory
-SIMILARITY_THRESHOLD = 0.15         # Minimum cosine similarity to treat a chunk as relevant
+SIMILARITY_THRESHOLD = 0.18         # Minimum cosine similarity to treat a chunk as relevant
 
 # Keywords that signal a medical emergency. These trigger a fixed safety message
 # BEFORE the model is ever called.
@@ -168,7 +168,17 @@ class KnowledgeBase:
         if self.vectorizer is None or self.tfidf_matrix is None or not self.chunks:
             return results
 
-        query_vec = self.vectorizer.transform([query])
+        normalized_query = re.sub(r"\brehab\b", "rehabilitation", query, flags=re.IGNORECASE)
+        query_terms = self.vectorizer.build_analyzer()(normalized_query)
+        if not query_terms:
+            return results
+        known_terms = sum(
+            term in self.vectorizer.vocabulary_ for term in query_terms
+        )
+        if known_terms / len(query_terms) < 0.4:
+            return results
+
+        query_vec = self.vectorizer.transform([normalized_query])
         sims = cosine_similarity(query_vec, self.tfidf_matrix).flatten()
         top_indices = sims.argsort()[::-1][:top_k]
 
@@ -320,6 +330,23 @@ class RehabLinkBackend:
             return value.get(name, default)
         return getattr(value, name, default)
 
+    def _knowledge_base_response(self, retrieved):
+        """Answer only with retrieved, sourced material when generation is unavailable."""
+        if not retrieved:
+            return (
+                "I couldn't find a closely relevant answer in the reviewed rehabilitation "
+                "sources. Try asking about rehabilitation, care teams, recovery goals, "
+                "assistive technology, or safety. For personal guidance, consult a "
+                "qualified healthcare professional."
+            )
+
+        excerpts = []
+        for item in retrieved[:2]:
+            excerpts.append(
+                f"{item['topic']}\n{item['text']}\nSource: {item['source']}"
+            )
+        return "Here is information from the reviewed rehabilitation sources:\n\n" + "\n\n".join(excerpts)
+
     def _model_available(self):
         if OPENAI_API_KEY:
             return True, None
@@ -409,7 +436,7 @@ class RehabLinkBackend:
         """Non-streaming generation. Returns the full assistant response string."""
         ok, err = self._model_available()
         if not ok:
-            return f"\u26a0\ufe0f Backend error: {err}"
+            return self._knowledge_base_response(retrieved)
 
         messages = self._build_messages(query, retrieved)
 
@@ -426,7 +453,7 @@ class RehabLinkBackend:
                 message = self._field(response, "message", {})
                 content = self._field(message, "content", "")
         except Exception as exc:
-            content = f"\u26a0\ufe0f Error generating response: {exc}"
+            content = self._knowledge_base_response(retrieved)
         return content
 
     def stream_generate(self, query, retrieved):
@@ -436,7 +463,7 @@ class RehabLinkBackend:
         start = time.time()
         ok, err = self._model_available()
         if not ok:
-            yield f"\u26a0\ufe0f Backend error: {err}"
+            yield self._knowledge_base_response(retrieved)
             self.last_metadata = {"response_time": time.time() - start}
             return
 
@@ -462,11 +489,11 @@ class RehabLinkBackend:
                 if piece:
                     full.append(piece)
                     yield piece
-        except Exception as exc:
-            yield f"\u26a0\ufe0f Error generating response: {exc}"
-            full_text = ""
-        else:
-            full_text = "".join(full)
+        except Exception:
+            if full:
+                yield "\n\nThe generated reply was interrupted. Please try again."
+            else:
+                yield self._knowledge_base_response(retrieved)
 
         self.last_metadata = {"response_time": time.time() - start}
 
