@@ -1,9 +1,9 @@
-# Rehabify Health - Rehabilitation Information Assistant
+# Rehabify Health - Rehabilitation Companion
 
-A browser-based chatbot for general rehabilitation and recovery education, built for an Artificial Intelligence course project. Rehabify Health is a fictional demo brand; the app does not represent a real facility or confirm that it provides services.
+A browser-based companion for people navigating rehabilitation and recovery, with general sourced education when helpful. Built for an Artificial Intelligence course project, Rehabify Health is a fictional demo brand; the app does not represent a real facility or confirm that it provides services.
 
 **Chatbot name:** Rehabify Health
-**Tagline:** Rehabify Health: supporting every step of recovery
+**Tagline:** A companion for every step of recovery
 **Handle:** @RehabifyHealth
 **Organization:** Rehabify Health (fictional demo)
 
@@ -15,7 +15,6 @@ A browser-based chatbot for general rehabilitation and recovery education, built
 | `templates/index.html` | Accessible web chat structure |
 | `static/` | Responsive styles and browser-side chat behavior |
 | `backend.py` | Local/hosted model clients, RAG, safety guardrails, and logging |
-| `frontend.py` | Compatibility launcher for the web app |
 | `knowledge_base.json` | Rehabilitation education and safety entries with source notes |
 | `references.md` | Health and NLP sources used in the knowledge base |
 | `requirements.txt` | Python dependencies |
@@ -24,8 +23,8 @@ A browser-based chatbot for general rehabilitation and recovery education, built
 ## NLP project scope
 
 - **Domain:** Rehabilitation and recovery education, subject to instructor approval.
-- **Chatbot:** Rehabify Health simulates a rehabilitation information account in a browser-based messaging interface.
-- **Purpose:** Explain general rehabilitation concepts, care-team roles, person-centered goals, and assistive technology. It does not assess users, prescribe exercises, or provide individualized treatment or facility information.
+- **Chatbot:** Rehabify Health simulates a supportive rehabilitation companion account in a browser-based messaging interface.
+- **Purpose:** Offer a welcoming space for conversation during rehabilitation, with sourced information about recovery, care-team roles, person-centered goals, and assistive technology when useful. It does not assess users, prescribe exercises, or provide individualized treatment or facility information.
 - **Slides:** The course requires a separate group presentation; slides are not included in this repository.
 
 ## Prerequisites
@@ -34,7 +33,7 @@ A browser-based chatbot for general rehabilitation and recovery education, built
 - [Ollama](https://ollama.com) installed and running for local development
 - The `gpt-oss:20b` model pulled for local development (or update `REHABIFY_MODEL` or `REHABLINK_MODEL` to match another installed model)
 - Flask and the Python dependencies in `requirements.txt`
-- A hosted OpenAI-compatible model provider and API key for Vercel deployment
+- A Gemini API key for hosted generated replies (optional; the project also supports a cited knowledge-base fallback)
 
 ## Setup
 
@@ -58,14 +57,15 @@ A browser-based chatbot for general rehabilitation and recovery education, built
    python3 -m pip install -r requirements.txt
    ```
 
-5. **Run the web app:**
+5. **Configure Gemini (optional):** copy `.env.example` to `.env` and add a Gemini API key from [Google AI Studio](https://aistudio.google.com/apikey). Keep `.env` private and out of Git. Without a Gemini key, local development uses Ollama.
+
+6. **Run the web app:**
 
    ```bash
    python3 app.py
    ```
 
-   Open http://127.0.0.1:5000 in your browser. You can also start the server
-   with `python3 frontend.py` for compatibility with the earlier launch command.
+   Open http://127.0.0.1:5000 in your browser.
 
    For faster replies, use the smaller model already installed on some setups:
 
@@ -80,16 +80,21 @@ A browser-based chatbot for general rehabilitation and recovery education, built
 ## Deploy to Vercel
 
 Vercel detects the root-level Flask `app.py` as the Python web entry point. The
-local Ollama process cannot run inside a Vercel deployment, so configure a hosted
-OpenAI-compatible chat-completions provider in the Vercel project's environment
-variables:
+local Ollama process cannot run inside a Vercel deployment. A hosted
+Gemini model can generate conversational replies through Google's
+OpenAI-compatible endpoint. Without a key, or if the provider is unavailable,
+the chatbot offers supportive conversation and quotes relevant passages from
+its reviewed knowledge base:
 
-- `OPENAI_API_KEY`: provider API key (required)
-- `OPENAI_MODEL`: hosted model name (defaults to `gpt-4o-mini`)
-- `OPENAI_BASE_URL`: optional API base URL (defaults to `https://api.openai.com/v1`)
+- `GEMINI_API_KEY`: Gemini API key (optional)
+- `GEMINI_MODEL`: hosted model name (defaults to `gemini-3.8-flash`)
+- `GEMINI_BASE_URL`: API base URL (defaults to `https://generativelanguage.googleapis.com/v1beta/openai/`)
 
-For local development, Rehabify Health continues to use Ollama unless `OPENAI_API_KEY`
-is set. Never commit API keys. Conversation history is held in the browser tab
+Legacy `OPENAI_API_KEY`, `OPENAI_MODEL`, and `OPENAI_BASE_URL` variables are
+accepted as fallbacks for existing deployments; use the `GEMINI_*` names for
+new configuration. For local development, Rehabify Health uses Gemini when
+`GEMINI_API_KEY` is set and otherwise uses Ollama. Never commit API keys.
+Conversation history is held in the browser tab
 and sent with each request; serverless function memory is not used for chat state.
 File-based chat logging is disabled on Vercel because its filesystem is ephemeral.
 
@@ -111,11 +116,13 @@ The browser keeps the last 6 user/assistant messages in the current tab and send
 ### Web chat
 The browser sends messages to Flask and receives assistant replies as a stream. It sends the last 6 messages with each request, so the app does not depend on server-side session memory. Local runs append interactions to `chat_log.csv`; logging is disabled on Vercel.
 
-### Guardrails
+### Companion approach and guardrails
+- **Companionship first:** the chatbot listens, acknowledges feelings users express without assuming, and asks at most one gentle follow-up question. It does not claim to be human or replace trusted people.
 - **Emergency detection:** English and Filipino emergency phrases trigger a fixed safety message before the model is called.
-- **General questions:** when RAG finds no relevant context, the configured model answers from general knowledge. It does not have live web access, so answers may be incomplete or out of date.
+- **Knowledge fallback:** when generation is unavailable, relevant retrieved passages are quoted with their sources; if nothing relevant is found, the chatbot says so instead of guessing.
+- **General questions:** when a model is configured and RAG finds no relevant context, the model may answer from general knowledge. It does not have live web access, so answers may be incomplete or out of date.
 - **Facility facts:** Rehabify Health-specific details must come from the knowledge base. If the answer is not there, Rehabify Health must say it does not have that information rather than invent a detail.
-- **Rehabilitation safety:** Rehabify Health is an AI education assistant, not a rehabilitation clinician. It does not assess function, diagnose, prescribe exercises, or create personal treatment plans, and adds a disclaimer to health answers.
+- **Rehabilitation safety:** Rehabify Health is an AI companion, not a human, clinician, or therapist. It does not assess function, diagnose, prescribe exercises, or create personal treatment plans, and adds a disclaimer to health answers.
 
 ### Logging
 In local development, interactions (timestamp, question, retrieved topics, response, and response time) are appended to `chat_log.csv` for testing evidence. This file logging is disabled on Vercel.

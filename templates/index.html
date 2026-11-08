@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#174c3e">
-  <title>{{ chatbot_name }} | Rehabilitation guide</title>
+  <title>{{ chatbot_name }} | Rehabilitation companion</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
   <script src="{{ url_for('static', filename='chat.js') }}" defer></script>
 </head>
@@ -15,7 +15,7 @@
         <span class="brand-mark" aria-hidden="true">R</span>
         <span class="brand-copy">
           <strong>{{ chatbot_name }}</strong>
-          <span>REHABILITATION GUIDE</span>
+          <span>REHABILITATION COMPANION</span>
         </span>
       </a>
       <div class="topbar-actions">
@@ -29,14 +29,14 @@
     <main class="workspace">
       <aside class="guide-panel" aria-labelledby="guide-title">
         <div class="guide-intro">
-          <span class="eyebrow">A GUIDE FOR YOUR NEXT STEP</span>
-          <h1 id="guide-title">Rehab is about getting back to what matters.</h1>
-          <p>Explore general information about recovery, daily function, accessibility, and the people who may support you.</p>
+          <span class="eyebrow">A COMPANION FOR YOUR REHAB JOURNEY</span>
+          <h1 id="guide-title">A place to talk through recovery, one step at a time.</h1>
+          <p>Talk about what's on your mind, or explore general, sourced information about rehabilitation, daily life, and care teams. Share only what feels comfortable.</p>
         </div>
 
         <div class="topic-section">
           <div class="section-heading">
-            <span class="eyebrow">EXPLORE A TOPIC</span>
+            <span class="eyebrow">A FEW THINGS WE CAN TALK ABOUT</span>
             <span class="topic-count">04</span>
           </div>
           <div class="topic-list">
@@ -89,10 +89,10 @@
           <article class="message-row assistant-message" data-welcome>
             <div class="message-avatar" aria-hidden="true">R</div>
             <div class="message-stack">
-              <span class="message-sender">{{ chatbot_name }} <span>·</span> guide</span>
+                  <span class="message-sender">{{ chatbot_name }} <span>·</span> companion</span>
               <div class="message-bubble">
-                <p>Hello, I’m {{ chatbot_name }}. I can share general information about rehabilitation, recovery, and everyday participation.</p>
-                <p>I can’t assess your needs or create a personal exercise or treatment plan. What would you like to explore?</p>
+                    <p>Hi, I’m {{ chatbot_name }}. I’m here as a supportive companion while you navigate rehabilitation and recovery.</p>
+                    <p>You can talk about what's on your mind or ask for general, sourced information. I can’t assess you or create a personal treatment plan. What would feel helpful to talk about today?</p>
               </div>
               <span class="message-time">Just now</span>
             </div>
@@ -101,7 +101,7 @@
 
         <form class="composer" id="chat-form">
           <label class="sr-only" for="message-input">Your message</label>
-          <textarea id="message-input" name="message" rows="1" maxlength="2000" placeholder="Ask about rehabilitation or recovery…" autocomplete="off" required></textarea>
+          <textarea id="message-input" name="message" rows="1" maxlength="2000" placeholder="What's on your mind today?" autocomplete="off" required></textarea>
           <div class="composer-footer">
             <span class="composer-hint"><span>Enter</span> to send <span class="hint-divider">·</span> Shift + Enter for a new line</span>
             <div class="composer-actions">
@@ -117,7 +117,7 @@
 
     <footer class="page-footer">
       <span>Educational information, not a personal medical consultation.</span>
-      <span>Rehabify Health <span class="footer-dot">·</span> supporting every step of recovery</span>
+      <span>Rehabify Health <span class="footer-dot">·</span> a companion for every step of recovery</span>
     </footer>
   </div>
 </body>

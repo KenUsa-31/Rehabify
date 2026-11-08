@@ -1,4 +1,4 @@
-"""backend.py - AI logic for Rehabify Health, the rehabilitation information assistant.
+"""backend.py - AI logic for Rehabify Health, a rehabilitation companion.
 
 This module handles everything related to the AI backend:
   * Loading and chunking the knowledge base (knowledge_base.json)
@@ -6,10 +6,10 @@ This module handles everything related to the AI backend:
   * Building a persona-driven system prompt
   * Managing short-term conversation memory (last 6 messages)
     * Applying safety guardrails (emergency detection and health safety)
-    * Generating answers via local Ollama or a hosted OpenAI-compatible model
+    * Generating answers via local Ollama or Gemini's OpenAI-compatible API
   * Logging every interaction to chat_log.csv
 
-Run this module through app.py or frontend.py.
+Run the web application through app.py.
 """
 
 import csv
@@ -44,14 +44,22 @@ MODEL_NAME = os.environ.get(
     "REHABIFY_MODEL",
     os.environ.get("REHABLINK_MODEL", os.environ.get("YAKAP_MODEL", "gpt-oss:20b")),
 )
-OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "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")
-OPENAI_BASE_URL = os.environ.get("OPENAI_BASE_URL", "https://api.openai.com/v1").rstrip("/")
-OPENAI_MODEL = os.environ.get("OPENAI_MODEL", "gpt-4o-mini")
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "") or os.environ.get("OPENAI_API_KEY", "")
+GEMINI_BASE_URL = os.environ.get(
+    "GEMINI_BASE_URL",
+    os.environ.get(
+        "OPENAI_BASE_URL",
+        "https://generativelanguage.googleapis.com/v1beta/openai",
+    ),
+).rstrip("/")
+GEMINI_MODEL = os.environ.get(
+    "GEMINI_MODEL", os.environ.get("OPENAI_MODEL", "gemini-3.8-flash")
+)
 OLLAMA_OPTIONS = {"num_predict": 192}
 MODEL_KEEP_ALIVE = "30m"
 ORG_NAME = "Rehabify Health"  # Fictional organization for the demo
 CHATBOT_NAME = "Rehabify Health"
-TAGLINE = "Rehabify Health: supporting every step of recovery"
+TAGLINE = "A companion for every step of recovery"
 HANDLE = "@RehabifyHealth"
 EMERGENCY_HOTLINE = "911"           # Local emergency hotline (change as needed)
 
@@ -234,13 +242,21 @@ class RehabLinkBackend:
     def _build_system_prompt(self):
         """Build the configured chatbot persona, rules, and disclaimer."""
         return (
-            f"You are {self.chatbot_name}, the social media assistant for "
-            f"{self.organization_name}. {self.tagline}. Social media handle: "
+            f"You are {self.chatbot_name}, a supportive social media companion for people "
+            f"navigating rehabilitation and recovery. {self.tagline}. Your handle is "
             f"{self.handle}.\n\n"
             "PERSONA:\n"
-            "You are a warm, friendly, professional rehabilitation information assistant. "
-            "Focus on rehabilitation, recovery, function, participation, accessibility, "
-            "and the roles of the rehabilitation team. Speak in a gentle, guide-like tone. "
+            "Your primary role is companionship; information is secondary. Be present, "
+            "patient, warm, and nonjudgmental. Listen to what the person shares and "
+            "acknowledge feelings they express without assuming how they feel. Respond "
+            "naturally rather than turning every message into a fact sheet. Ask at most "
+            "one gentle, open-ended question when it helps, and let the person choose "
+            "whether to talk, reflect, or ask for information. Offer encouragement without "
+            "promising outcomes or pressuring them to make progress. Never imply that you "
+            "are human or a substitute for trusted people in their life.\n\n"
+            "When useful, share general, sourced information about rehabilitation, "
+            "recovery, function, participation, accessibility, and care teams. Speak in a "
+            "gentle, conversational tone. "
             "Use light emoji use (e.g. \u2705, \u26a0\ufe0f, "
             "\u270d\ufe0f, \u2764\ufe0f) but do not overdo it. Be concise and easy to read, "
             "as users are reading you on social media.\n\n"
@@ -249,14 +265,17 @@ class RehabLinkBackend:
             "(a mix of Filipino and English), reply in the same Filipino/Taglish style. "
             "Keep the tone friendly, professional, and caring regardless of language.\n\n"
             "RULES:\n"
-            "1. Keep the conversation centered on rehabilitation and general recovery "
-            "education. Answer unrelated questions briefly, then invite the user back "
-            "to rehabilitation. Be clear when information may be uncertain or out of date.\n"
+            "1. Center conversations on the person's rehabilitation journey, everyday "
+            "challenges, and general recovery education. Be comfortable offering a "
+            "supportive response without adding facts when that is what the person needs. "
+            "Answer unrelated questions briefly without forcing the conversation back to "
+            "rehabilitation. Be clear when information may be uncertain or out of date.\n"
             "2. {org} is a fictional demo organization. Use only retrieved context for "
             "organization-specific facts. Never invent services, prices, hours, policies, "
             "contact details, or availability. If the context does not answer a "
             "facility-specific question, say exactly: 'I don't have that information.'\n"
-            "3. You are not a doctor, nurse, or clinician, and you cannot examine or "
+            "3. You are an AI companion, not a human, doctor, nurse, therapist, or "
+            "clinician, and you cannot examine or "
             "assess the user. For health questions, provide general educational "
             "information only, not a personal consultation, rehabilitation assessment, "
             "exercise program, or treatment plan. Never diagnose, prescribe, set "
@@ -331,13 +350,12 @@ class RehabLinkBackend:
         return getattr(value, name, default)
 
     def _knowledge_base_response(self, retrieved):
-        """Answer only with retrieved, sourced material when generation is unavailable."""
+        """Offer supportive conversation and sourced material without generation."""
         if not retrieved:
             return (
-                "I couldn't find a closely relevant answer in the reviewed rehabilitation "
-                "sources. Try asking about rehabilitation, care teams, recovery goals, "
-                "assistive technology, or safety. For personal guidance, consult a "
-                "qualified healthcare professional."
+                "I'm here with you. I don't have a reliable answer to that in my reviewed "
+                "sources, but we can talk through what's on your mind. What would feel "
+                "helpful right now?"
             )
 
         excerpts = []
@@ -345,15 +363,19 @@ class RehabLinkBackend:
             excerpts.append(
                 f"{item['topic']}\n{item['text']}\nSource: {item['source']}"
             )
-        return "Here is information from the reviewed rehabilitation sources:\n\n" + "\n\n".join(excerpts)
+        return (
+            "I'm here with you. Here's a helpful point from the reviewed rehabilitation "
+            "sources:\n\n" + "\n\n".join(excerpts) +
+            "\n\nWhat feels most useful to talk about next?"
+        )
 
     def _model_available(self):
-        if OPENAI_API_KEY:
+        if GEMINI_API_KEY:
             return True, None
         if os.environ.get("VERCEL"):
             return False, (
-                "Hosted model is not configured. Add OPENAI_API_KEY and "
-                "OPENAI_MODEL to the Vercel project environment variables."
+                "Gemini is not configured. Add GEMINI_API_KEY and GEMINI_MODEL "
+                "to the Vercel project environment variables."
             )
         if not self._ollama_available():
             return False, "Ollama Python library is not installed."
@@ -386,18 +408,18 @@ class RehabLinkBackend:
         return messages
 
     @staticmethod
-    def _openai_request(messages, stream):
+    def _gemini_compatible_request(messages, stream):
         payload = {
-            "model": OPENAI_MODEL,
+            "model": GEMINI_MODEL,
             "messages": messages,
             "max_tokens": OLLAMA_OPTIONS["num_predict"],
             "stream": stream,
         }
         request = Request(
-            f"{OPENAI_BASE_URL}/chat/completions",
+            f"{GEMINI_BASE_URL}/chat/completions",
             data=json.dumps(payload).encode("utf-8"),
             headers={
-                "Authorization": f"Bearer {OPENAI_API_KEY}",
+                "Authorization": f"Bearer {GEMINI_API_KEY}",
                 "Content-Type": "application/json",
             },
             method="POST",
@@ -410,8 +432,8 @@ class RehabLinkBackend:
             ) from exc
 
     @classmethod
-    def _openai_stream(cls, messages):
-        with cls._openai_request(messages, stream=True) as response:
+    def _gemini_compatible_stream(cls, messages):
+        with cls._gemini_compatible_request(messages, stream=True) as response:
             for raw_line in response:
                 line = raw_line.decode("utf-8").strip()
                 if not line.startswith("data: "):
@@ -427,8 +449,8 @@ class RehabLinkBackend:
                         yield piece
 
     @classmethod
-    def _openai_generate(cls, messages):
-        with cls._openai_request(messages, stream=False) as response:
+    def _gemini_compatible_generate(cls, messages):
+        with cls._gemini_compatible_request(messages, stream=False) as response:
             result = json.load(response)
         return result["choices"][0]["message"].get("content", "")
 
@@ -441,8 +463,8 @@ class RehabLinkBackend:
         messages = self._build_messages(query, retrieved)
 
         try:
-            if OPENAI_API_KEY:
-                content = self._openai_generate(messages)
+            if GEMINI_API_KEY:
+                content = self._gemini_compatible_generate(messages)
             else:
                 response = ollama.chat(
                     model=MODEL_NAME,
@@ -471,8 +493,8 @@ class RehabLinkBackend:
 
         try:
             full = []
-            if OPENAI_API_KEY:
-                pieces = self._openai_stream(messages)
+            if GEMINI_API_KEY:
+                pieces = self._gemini_compatible_stream(messages)
             else:
                 stream = ollama.chat(
                     model=MODEL_NAME,
