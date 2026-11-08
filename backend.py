@@ -44,7 +44,7 @@ MODEL_NAME = os.environ.get(
     "REHABIFY_MODEL",
     os.environ.get("REHABLINK_MODEL", os.environ.get("YAKAP_MODEL", "gpt-oss:20b")),
 )
-OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
+OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "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")
 OPENAI_BASE_URL = os.environ.get("OPENAI_BASE_URL", "https://api.openai.com/v1").rstrip("/")
 OPENAI_MODEL = os.environ.get("OPENAI_MODEL", "gpt-4o-mini")
 OLLAMA_OPTIONS = {"num_predict": 192}
