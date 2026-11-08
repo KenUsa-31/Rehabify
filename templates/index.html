@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#174c3e">
+  <title>{{ chatbot_name }} | Rehabilitation guide</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <script src="{{ url_for('static', filename='chat.js') }}" defer></script>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <a class="brand" href="/" aria-label="{{ chatbot_name }} home">
+        <span class="brand-mark" aria-hidden="true">R</span>
+        <span class="brand-copy">
+          <strong>{{ chatbot_name }}</strong>
+          <span>REHABILITATION GUIDE</span>
+        </span>
+      </a>
+      <div class="topbar-actions">
+        <span class="privacy-label"><span class="status-dot"></span>Tab-only history</span>
+        <button class="text-button" id="new-chat" type="button" title="Clear this conversation">
+          <span aria-hidden="true">↻</span> New chat
+        </button>
+      </div>
+    </header>
+
+    <main class="workspace">
+      <aside class="guide-panel" aria-labelledby="guide-title">
+        <div class="guide-intro">
+          <span class="eyebrow">A GUIDE FOR YOUR NEXT STEP</span>
+          <h1 id="guide-title">Rehab is about getting back to what matters.</h1>
+          <p>Explore general information about recovery, daily function, accessibility, and the people who may support you.</p>
+        </div>
+
+        <div class="topic-section">
+          <div class="section-heading">
+            <span class="eyebrow">EXPLORE A TOPIC</span>
+            <span class="topic-count">04</span>
+          </div>
+          <div class="topic-list">
+            <button class="topic-button" type="button" data-prompt="What does rehabilitation mean?">
+              <span class="topic-number">01</span>
+              <span>Rehabilitation basics</span>
+              <span class="topic-arrow" aria-hidden="true">↗</span>
+            </button>
+            <button class="topic-button" type="button" data-prompt="Who might be part of a rehabilitation team?">
+              <span class="topic-number">02</span>
+              <span>The rehab team</span>
+              <span class="topic-arrow" aria-hidden="true">↗</span>
+            </button>
+            <button class="topic-button" type="button" data-prompt="How are rehabilitation goals chosen?">
+              <span class="topic-number">03</span>
+              <span>Personal goals</span>
+              <span class="topic-arrow" aria-hidden="true">↗</span>
+            </button>
+            <button class="topic-button" type="button" data-prompt="What assistive products can support independence?">
+              <span class="topic-number">04</span>
+              <span>Assistive products</span>
+              <span class="topic-arrow" aria-hidden="true">↗</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="urgent-note">
+          <span class="urgent-mark" aria-hidden="true">!</span>
+          <div>
+            <strong>Need urgent help?</strong>
+            <p>For a medical emergency, call 911 or go to the nearest emergency department.</p>
+          </div>
+        </div>
+        <p class="guide-footnote">A short chat history is sent to the configured AI provider for follow-up replies. Avoid sharing sensitive health details.</p>
+      </aside>
+
+      <section class="chat-panel" aria-label="Chat with {{ chatbot_name }}">
+        <div class="chat-header">
+          <div class="chat-avatar" aria-hidden="true">R</div>
+          <div class="chat-heading">
+            <strong>{{ chatbot_name }}</strong>
+            <span>{{ handle }} <span class="separator">·</span> supporting every step of recovery</span>
+          </div>
+          <div class="assistant-state" id="assistant-state" aria-live="polite">
+            <span class="status-dot"></span><span>Ready</span>
+          </div>
+        </div>
+
+        <div class="messages" id="messages" role="log" aria-label="Conversation" aria-relevant="additions text">
+          <article class="message-row assistant-message" data-welcome>
+            <div class="message-avatar" aria-hidden="true">R</div>
+            <div class="message-stack">
+              <span class="message-sender">{{ chatbot_name }} <span>·</span> guide</span>
+              <div class="message-bubble">
+                <p>Hello, I’m {{ chatbot_name }}. I can share general information about rehabilitation, recovery, and everyday participation.</p>
+                <p>I can’t assess your needs or create a personal exercise or treatment plan. What would you like to explore?</p>
+              </div>
+              <span class="message-time">Just now</span>
+            </div>
+          </article>
+        </div>
+
+        <form class="composer" id="chat-form">
+          <label class="sr-only" for="message-input">Your message</label>
+          <textarea id="message-input" name="message" rows="1" maxlength="2000" placeholder="Ask about rehabilitation or recovery…" autocomplete="off" required></textarea>
+          <div class="composer-footer">
+            <span class="composer-hint"><span>Enter</span> to send <span class="hint-divider">·</span> Shift + Enter for a new line</span>
+            <div class="composer-actions">
+              <span class="character-count" id="character-count">0 / 2000</span>
+              <button class="send-button" id="send-button" type="submit" disabled>
+                <span>Send</span><span class="send-arrow" aria-hidden="true">↗</span>
+              </button>
+            </div>
+          </div>
+        </form>
+      </section>
+    </main>
+
+    <footer class="page-footer">
+      <span>Educational information, not a personal medical consultation.</span>
+      <span>Rehabify Health <span class="footer-dot">·</span> supporting every step of recovery</span>
+    </footer>
+  </div>
+</body>
+</html>

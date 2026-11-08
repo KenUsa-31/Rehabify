@@ -1,19 +1,20 @@
-"""
-frontend.py - Desktop GUI for Yakap, the healthcare information assistant.
+"""Compatibility launcher for Rehabify Health's browser application.
 
-A Tkinter-based desktop application styled like a social media messaging window.
-Run with:  python frontend.py
-
-It imports YakapBackend from backend.py and handles:
-    * A themed healthcare profile mark, account name, handle, and online status
-    * Chat bubbles (user on the right, Yakap on the left) with timestamps
-  * Scrollable chat area, message input box, Send button, Enter-to-send
-    * 'Yakap is typing...' indicator while the model generates
-  * Quick-reply buttons for common questions
-  * Clear chat button
-  * Model calls run in a background thread so the window never freezes
-  * Word-by-word streaming of the bot response
+Run with: python frontend.py
 """
+
+if __name__ == "__main__":
+        import os
+
+        from app import app
+
+        app.run(
+                host="127.0.0.1",
+                port=int(os.environ.get("PORT", "5000")),
+                debug=False,
+                threaded=True,
+        )
+        raise SystemExit
 
 import threading
 from datetime import datetime
@@ -30,7 +31,7 @@ except ModuleNotFoundError as exc:
     ) from exc
 
 try:
-    from backend import YakapBackend, CHATBOT_NAME, ORG_NAME, TAGLINE, HANDLE
+    from backend import RehabLinkBackend, CHATBOT_NAME, ORG_NAME, TAGLINE, HANDLE
 except ImportError as exc:  # pragma: no cover
     raise SystemExit(f"Could not import backend.py: {exc}")
 
@@ -53,7 +54,7 @@ THEME = {
     "logo_bg": "#f8e3ea",
     "logo_mark": "#8e3450",
     "online": "#a6e2c0",
-    "mark": "heart",
+    "mark": "rehab",
 }
 FONT_FAMILY = "TkDefaultFont"
 
@@ -120,7 +121,7 @@ class ChatBubble(tk.Frame):
 
         tk.Label(
             self.bubble,
-            text="YOU" if is_user else "YAKAP",
+            text="YOU" if is_user else "REHABIFY",
             bg=bubble_bg,
             fg=self.theme["text"] if is_user else self.theme["accent"],
             font=(FONT_FAMILY, 8, "bold"),
@@ -147,7 +148,7 @@ class ChatBubble(tk.Frame):
 
 
 class TypingIndicator(tk.Frame):
-    """'Yakap is typing...' indicator shown while the model generates."""
+    """'Rehabify Health is typing...' indicator shown while the model generates."""
 
     def __init__(self, parent, chatbot_name=CHATBOT_NAME, theme=None, **kwargs):
         self.chatbot_name = chatbot_name
@@ -187,7 +188,7 @@ class TypingIndicator(tk.Frame):
 # Main application
 # ---------------------------------------------------------------------------
 
-class YakapApp:
+class RehabLinkApp:
     def __init__(
         self,
         root,
@@ -208,7 +209,7 @@ class YakapApp:
         self.root.minsize(410, 640)
         self.root.configure(bg=self.theme["bg"])
 
-        self.backend = YakapBackend(
+        self.backend = RehabLinkBackend(
             chatbot_name=self.chatbot_name,
             organization_name=self.organization_name,
             handle=self.handle,
@@ -238,7 +239,7 @@ class YakapApp:
         info = tk.Frame(profile_card, bg=theme["header"])
         info.pack(side=tk.LEFT, fill=tk.Y, expand=True, pady=(12, 8))
         tk.Label(
-            info, text="YAKAP CARE DESK", bg=theme["header"],
+            info, text="REHABILITATION GUIDE", bg=theme["header"],
             fg="#f0cbd7", font=(FONT_FAMILY, 8, "bold"),
         ).pack(anchor="w")
         tk.Label(
@@ -268,7 +269,12 @@ class YakapApp:
             fg=theme["muted"], font=(FONT_FAMILY, 8, "bold"),
         ).grid(row=0, column=0, columnspan=2, sticky="w", pady=(0, 6))
         self.quick_buttons = []
-        topics = ["Hospital services", "Hours & schedule", "Location", "Emergency help"]
+        topics = [
+            "What is rehabilitation?",
+            "Who is on a rehab team?",
+            "How are recovery goals set?",
+            "When should I seek urgent help?",
+        ]
         for column in range(2):
             quick.grid_columnconfigure(column, weight=1, uniform="quick-replies")
         for index, label in enumerate(topics):
@@ -350,11 +356,11 @@ class YakapApp:
 
     def _add_welcome_message(self):
         welcome = (
-            f"Hello! I'm {self.chatbot_name}, the healthcare information assistant "
-            f"for {self.organization_name} ({self.handle}).\n\n"
-            "I can help with "
-            "verified hospital information and general health "
-            "education. I cannot diagnose or provide personal medical consultation.\n\n"
+            f"Hello! I'm {self.chatbot_name}, your rehabilitation information guide "
+            f"from {self.organization_name} ({self.handle}).\n\n"
+            "I can explain rehabilitation, the care team, accessibility, and general "
+            "recovery concepts. Every person's needs are different, so I can't assess "
+            "you or create a personal exercise or treatment plan.\n\n"
             "\u26a0\ufe0f If you're having a medical emergency, please call 911 or go "
             "to the nearest hospital immediately."
         )
@@ -480,7 +486,7 @@ class _StreamableBubble(tk.Frame):
         self.bubble.pack(anchor="w", padx=(10, 60), pady=(4, 0))
 
         tk.Label(
-            self.bubble, text="YAKAP", bg=self.theme["bot_bubble"],
+            self.bubble, text="REHABIFY", bg=self.theme["bot_bubble"],
             fg=self.theme["accent"], font=(FONT_FAMILY, 8, "bold"),
         ).pack(anchor="w", padx=13, pady=(8, 0))
 
@@ -508,11 +514,11 @@ class _StreamableBubble(tk.Frame):
 # ---------------------------------------------------------------------------
 
 if __name__ == "__main__":
-    # Make imports work when run directly from the Yakap folder.
+    # Make imports work when run directly from the Rehabify Health folder.
     import sys
     import os
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
     root = tk.Tk()
-    app = YakapApp(root)
+    app = RehabLinkApp(root)
     app.run()

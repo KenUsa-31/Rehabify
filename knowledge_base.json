@@ -5,48 +5,28 @@
     "source": "World Health Organization, Emergency and critical care, https://www.who.int/health-topics/emergency-care (accessed 2026-11-07)"
   },
   {
-    "topic": "Operating Hours",
-    "content": "DEMO PLACEHOLDER: Yakap General Hospital is a fictional project organization. No verified operating hours are provided. Do not rely on sample schedules; replace this entry with hours approved and published by a real facility before deployment.",
-    "source": "Fictional project placeholder; no real facility source or schedule has been verified."
+    "topic": "What Rehabilitation Means",
+    "content": "Rehabilitation is a set of interventions designed to optimize functioning and reduce disability in people with health conditions, in interaction with their environment. It can help people of all ages be as independent as possible in everyday activities and participate in education, work, recreation, and family roles. Rehabilitation is person-centered: goals and services depend on a person's abilities, priorities, context, and assessment by qualified professionals. This information is educational and does not determine an individual's needs.",
+    "source": "World Health Organization, Rehabilitation, https://www.who.int/news-room/fact-sheets/detail/rehabilitation (accessed 2026-11-07)"
   },
   {
-    "topic": "Location & Address",
-    "content": "DEMO PLACEHOLDER: Yakap General Hospital is fictional. It has no verified street address, telephone number, website, or parking information. Do not present an example address or contact number as real; add information only from an official facility source.",
-    "source": "Fictional project placeholder; no real facility location or contact source has been verified."
+    "topic": "Rehabilitation Team and Services",
+    "content": "Rehabilitation may involve different professionals depending on a person's goals and health needs. A team can include physical therapists, occupational therapists, speech and language therapists, rehabilitation physicians, nurses, psychologists, and social workers. Not every person needs every profession, and services vary by setting. A qualified care team assesses needs, coordinates care, and agrees on relevant goals with the person. Rehabify Health is a fictional demo brand; this entry does not confirm that it employs or offers any listed service.",
+    "source": "World Health Organization, Rehabilitation, https://www.who.int/news-room/fact-sheets/detail/rehabilitation (accessed 2026-11-07); fictional project note"
   },
   {
-    "topic": "Services Offered",
-    "content": "DEMO PLACEHOLDER: This project does not have a verified service directory for a real hospital. Hospital departments and available services vary by facility. Do not claim that Yakap General Hospital offers a service unless it appears in an official, approved directory.",
-    "source": "Fictional project placeholder; no real facility directory has been verified."
+    "topic": "Rehabilitation Goals and Person-Centered Care",
+    "content": "Rehabilitation aims to support functioning and participation in activities that matter to the person. Goals are individual and can change over time as needs and abilities change. They should be discussed with the person and their qualified rehabilitation team after assessment. A chatbot cannot evaluate movement, pain, safety, progress, or readiness for an activity and should not set personal goals or prescribe exercises.",
+    "source": "World Health Organization, Rehabilitation, https://www.who.int/news-room/fact-sheets/detail/rehabilitation (accessed 2026-11-07)"
   },
   {
-    "topic": "Appointment Scheduling",
-    "content": "DEMO PLACEHOLDER: No verified appointment process, telephone number, website, or walk-in policy is available for this fictional project hospital. Confirm scheduling instructions with the selected real facility and cite its official patient-services page before deployment.",
-    "source": "Fictional project placeholder; no real appointment source has been verified."
+    "topic": "Assistive Technology and Accessibility",
+    "content": "Assistive products can support functioning, independence, and participation. Examples include mobility aids, hearing aids, communication tools, and products that support vision or self-care. The right product depends on the person's needs and environment; selection, fitting, training, and follow-up may require qualified professionals. This general information is not a recommendation for a particular device, and this fictional project has no verified equipment or supply service.",
+    "source": "World Health Organization, Assistive technology, https://www.who.int/news-room/fact-sheets/detail/assistive-technology (accessed 2026-11-07)"
   },
   {
-    "topic": "Visiting Hours",
-    "content": "DEMO PLACEHOLDER: Visiting hours and visitor rules for Yakap General Hospital have not been verified because the project hospital is fictional. Do not rely on sample visitor limits or times; check the real facility's current official policy.",
-    "source": "Fictional project placeholder; no real visitor policy has been verified."
-  },
-  {
-    "topic": "Insurance & Billing",
-    "content": "DEMO PLACEHOLDER: This project has no verified information about accepted PhilHealth benefits, HMOs, insurance plans, billing contacts, or co-payments. Coverage and charges depend on the facility and the patient's circumstances; confirm directly with official facility and PhilHealth sources.",
-    "source": "Fictional project placeholder; no real billing or coverage policy has been verified."
-  },
-  {
-    "topic": "Vaccinations & Immunizations",
-    "content": "Vaccines reduce the risk of getting infectious diseases by working with the body's natural defenses to build protection. Recommended vaccines and schedules vary by age, health, and local public-health guidance. Ask a qualified healthcare professional or local health authority about personal vaccination decisions; this prototype does not provide a verified clinic schedule.",
-    "source": "World Health Organization, Vaccines and immunization, https://www.who.int/health-topics/vaccines-and-immunization (accessed 2026-11-07)"
-  },
-  {
-    "topic": "Pediatrics / Child Health",
-    "content": "Protecting and improving children's health is important. The World Health Organization notes that child health depends on access to healthcare as well as nutrition, safety, and supportive conditions for growth and development. This general information does not describe services or hours at a specific hospital and is not personal medical advice.",
-    "source": "World Health Organization, Child health, https://www.who.int/health-topics/child-health (accessed 2026-11-07)"
-  },
-  {
-    "topic": "Cardiology / Heart Health",
-    "content": "Cardiovascular diseases are disorders of the heart and blood vessels. The World Health Organization identifies tobacco use, unhealthy diet, physical inactivity, and harmful alcohol use among important behavioral risk factors. Chest pain or difficulty breathing can require urgent assessment; this chatbot cannot diagnose symptoms, so seek emergency care for a possible emergency.",
-    "source": "World Health Organization, Cardiovascular diseases (CVDs), fact sheet, 2025-07-31, https://www.who.int/news-room/fact-sheets/detail/cardiovascular-diseases-(cvds)"
+    "topic": "Rehabilitation Safety",
+    "content": "A person's rehabilitation activities should be based on an assessment and plan from qualified professionals who understand their condition, abilities, environment, and risks. Do not start, stop, or intensify exercises based on chatbot advice. Stop an activity and contact the care team for individualized guidance if it causes new or worsening symptoms. Sudden severe symptoms, such as difficulty breathing, chest pain, or signs of stroke, need urgent medical attention rather than a rehabilitation chat.",
+    "source": "General safety guidance for this educational prototype; individualized decisions require a qualified healthcare professional. Emergency care overview: World Health Organization, https://www.who.int/health-topics/emergency-care"
   }
 ]

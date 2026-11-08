@@ -1,5 +1,4 @@
-"""
-backend.py - AI logic for Yakap, the healthcare information assistant.
+"""backend.py - AI logic for Rehabify Health, the rehabilitation information assistant.
 
 This module handles everything related to the AI backend:
   * Loading and chunking the knowledge base (knowledge_base.json)
@@ -7,10 +6,10 @@ This module handles everything related to the AI backend:
   * Building a persona-driven system prompt
   * Managing short-term conversation memory (last 6 messages)
     * Applying safety guardrails (emergency detection and health safety)
-  * Generating answers via a local Ollama model (gpt-oss)
+    * Generating answers via local Ollama or a hosted OpenAI-compatible model
   * Logging every interaction to chat_log.csv
 
-Run this module only through frontend.py.
+Run this module through app.py or frontend.py.
 """
 
 import csv
@@ -20,6 +19,8 @@ import re
 import threading
 import time
 from datetime import datetime
+from urllib.error import HTTPError
+from urllib.request import Request, urlopen
 
 try:
     import ollama
@@ -39,14 +40,19 @@ except ImportError:  # pragma: no cover - handled at runtime with a friendly err
 # ---------------------------------------------------------------------------
 # Configuration
 # ---------------------------------------------------------------------------
-
-MODEL_NAME = os.environ.get("YAKAP_MODEL", "gpt-oss:20b")
+MODEL_NAME = os.environ.get(
+    "REHABIFY_MODEL",
+    os.environ.get("REHABLINK_MODEL", os.environ.get("YAKAP_MODEL", "gpt-oss:20b")),
+)
+OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
+OPENAI_BASE_URL = os.environ.get("OPENAI_BASE_URL", "https://api.openai.com/v1").rstrip("/")
+OPENAI_MODEL = os.environ.get("OPENAI_MODEL", "gpt-4o-mini")
 OLLAMA_OPTIONS = {"num_predict": 192}
 MODEL_KEEP_ALIVE = "30m"
-ORG_NAME = "Yakap General Hospital" # Organization the chatbot represents
-CHATBOT_NAME = "Yakap"
-TAGLINE = "Yakap: care that feels close"
-HANDLE = "@YakapCare"
+ORG_NAME = "Rehabify Health"  # Fictional organization for the demo
+CHATBOT_NAME = "Rehabify Health"
+TAGLINE = "Rehabify Health: supporting every step of recovery"
+HANDLE = "@RehabifyHealth"
 EMERGENCY_HOTLINE = "911"           # Local emergency hotline (change as needed)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -80,7 +86,10 @@ HEALTH_KEYWORDS = [
     "address", "service", "services", "department", "pediatric", "pediatrics",
     "cardiology", "obstetrics", "gynecology", "radiology", "laboratory",
     "headache", "cough", "rash", "allergy", "allergies", "shingles",
-    "diagnose", "prescribe", "kalusugan", "ospital", "doktor", "gamot",
+    "diagnose", "prescribe", "rehabilitation", "rehab", "physical therapy",
+    "occupational therapy", "speech therapy", "physiotherapy", "mobility",
+    "recovery", "stroke recovery", "assistive device", "prosthetic", "amputation",
+    "kalusugan", "ospital", "doktor", "gamot", "rehabilitasyon", "pagpapagaling",
     "sintomas", "lagnat", "ubo", "masakit", "sakit",
 ]
 
@@ -91,7 +100,7 @@ SAFETY_MESSAGE = (
 ).format(hotline=EMERGENCY_HOTLINE)
 
 DISCLAIMER = (
-    "\n\n---\n*Disclaimer: Yakap is an AI assistant, not a doctor, nurse, or other "
+    "\n\n---\n*Disclaimer: Rehabify Health is an AI assistant, not a doctor, nurse, or other "
     "licensed healthcare professional. This is general educational information, "
     "not a personal medical consultation, diagnosis, or treatment plan. Please "
     "consult a qualified healthcare professional for advice about your situation.*"
@@ -178,9 +187,9 @@ class KnowledgeBase:
 # Backend chatbot
 # ---------------------------------------------------------------------------
 
-class YakapBackend:
+class RehabLinkBackend:
     """Main chatbot backend. Combines RAG retrieval, memory, guardrails, and
-    Ollama generation into a single conversational interface.
+    Model generation into a single conversational interface.
     """
 
     def __init__(
@@ -189,12 +198,13 @@ class YakapBackend:
         organization_name=ORG_NAME,
         handle=HANDLE,
         tagline=TAGLINE,
+        knowledge_base=None,
     ):
         self.chatbot_name = chatbot_name
         self.organization_name = organization_name
         self.handle = handle
         self.tagline = tagline
-        self.kb = KnowledgeBase(KB_FILE)
+        self.kb = knowledge_base or KnowledgeBase(KB_FILE)
         self.memory = []  # list of {"role": "user"/"assistant", "content": str}
         self.lock = threading.Lock()
         self.last_metadata = {}  # metadata from the most recent streamed response
@@ -214,12 +224,14 @@ class YakapBackend:
     def _build_system_prompt(self):
         """Build the configured chatbot persona, rules, and disclaimer."""
         return (
-            f"You are {self.chatbot_name}, the official social media assistant of "
+            f"You are {self.chatbot_name}, the social media assistant for "
             f"{self.organization_name}. {self.tagline}. Social media handle: "
             f"{self.handle}.\n\n"
             "PERSONA:\n"
-            "You are a warm, friendly, professional healthcare information assistant. "
-            "Speak in a gentle, guide-like tone. Use light emoji use (e.g. \u2705, \u26a0\ufe0f, "
+            "You are a warm, friendly, professional rehabilitation information assistant. "
+            "Focus on rehabilitation, recovery, function, participation, accessibility, "
+            "and the roles of the rehabilitation team. Speak in a gentle, guide-like tone. "
+            "Use light emoji use (e.g. \u2705, \u26a0\ufe0f, "
             "\u270d\ufe0f, \u2764\ufe0f) but do not overdo it. Be concise and easy to read, "
             "as users are reading you on social media.\n\n"
             "LANGUAGE:\n"
@@ -227,18 +239,20 @@ class YakapBackend:
             "(a mix of Filipino and English), reply in the same Filipino/Taglish style. "
             "Keep the tone friendly, professional, and caring regardless of language.\n\n"
             "RULES:\n"
-            "1. Answer questions on any topic helpfully using general knowledge when needed. "
-            "Be clear when information may be uncertain or out of date.\n"
-            "2. For questions about {org}, use only the retrieved knowledge-base context. "
-            "Never invent hospital services, prices, hours, policies, contact details, "
-            "or other organization-specific facts. If the context does not answer a "
-            "hospital-specific question, say exactly: 'I don't have that information.'\n"
+            "1. Keep the conversation centered on rehabilitation and general recovery "
+            "education. Answer unrelated questions briefly, then invite the user back "
+            "to rehabilitation. Be clear when information may be uncertain or out of date.\n"
+            "2. {org} is a fictional demo organization. Use only retrieved context for "
+            "organization-specific facts. Never invent services, prices, hours, policies, "
+            "contact details, or availability. If the context does not answer a "
+            "facility-specific question, say exactly: 'I don't have that information.'\n"
             "3. You are not a doctor, nurse, or clinician, and you cannot examine or "
             "assess the user. For health questions, provide general educational "
-            "information only, not a personal consultation or treatment plan. Never "
-            "diagnose, prescribe, or recommend an individualized medication dose or "
-            "treatment. Encourage a qualified healthcare professional for personal "
-            "advice.\n"
+            "information only, not a personal consultation, rehabilitation assessment, "
+            "exercise program, or treatment plan. Never diagnose, prescribe, set "
+            "individualized exercise intensity, or recommend a treatment. Explain that "
+            "rehabilitation goals and activities must be planned with the person's "
+            "qualified care team. Encourage a clinician for personal advice.\n"
             "4. For medical emergencies (chest pain, difficulty breathing, severe "
             "bleeding, suicidal thoughts, stroke, etc.), tell the user to call the "
             "local emergency hotline at {hotline} or go to the nearest hospital "
@@ -270,7 +284,7 @@ class YakapBackend:
     # -- prompt construction ----------------------------------------------
 
     def _build_user_prompt(self, query, retrieved):
-        """Combine retrieved context (RAG) with the user's question."""
+        """Combine retrieved context (RAG) with the user question."""
         context_parts = []
         sources = []
         for chunk in retrieved:
@@ -288,9 +302,9 @@ class YakapBackend:
             f"RETRIEVED CONTEXT (from knowledge base):\n{context}\n\n"
             f"SOURCES: {source_list}\n\n"
             f"USER QUESTION:\n{query}\n\n"
-            "Use retrieved context for Yakap General Hospital-specific facts and cite "
-            "its source when relevant. If the context is empty, answer general questions "
-            "from your general knowledge, but do not guess hospital-specific facts. "
+            f"Use retrieved context for {self.organization_name}-specific facts and cite "
+            "its source when relevant. If the context is empty, provide general "
+            "rehabilitation education cautiously, but do not guess facility-specific facts. "
             "Follow your persona and rules above."
         )
 
@@ -307,6 +321,13 @@ class YakapBackend:
         return getattr(value, name, default)
 
     def _model_available(self):
+        if OPENAI_API_KEY:
+            return True, None
+        if os.environ.get("VERCEL"):
+            return False, (
+                "Hosted model is not configured. Add OPENAI_API_KEY and "
+                "OPENAI_MODEL to the Vercel project environment variables."
+            )
         if not self._ollama_available():
             return False, "Ollama Python library is not installed."
         try:
@@ -328,28 +349,82 @@ class YakapBackend:
                 f"Error: {exc}"
             )
 
+    def _build_messages(self, query, retrieved):
+        messages = [{"role": "system", "content": self._build_system_prompt()}]
+        messages.extend(self._get_memory_messages())
+        messages.append({
+            "role": "user",
+            "content": self._build_user_prompt(query, retrieved),
+        })
+        return messages
+
+    @staticmethod
+    def _openai_request(messages, stream):
+        payload = {
+            "model": OPENAI_MODEL,
+            "messages": messages,
+            "max_tokens": OLLAMA_OPTIONS["num_predict"],
+            "stream": stream,
+        }
+        request = Request(
+            f"{OPENAI_BASE_URL}/chat/completions",
+            data=json.dumps(payload).encode("utf-8"),
+            headers={
+                "Authorization": f"Bearer {OPENAI_API_KEY}",
+                "Content-Type": "application/json",
+            },
+            method="POST",
+        )
+        try:
+            return urlopen(request, timeout=60)
+        except HTTPError as exc:
+            raise RuntimeError(
+                f"Hosted model request failed with HTTP {exc.code}."
+            ) from exc
+
+    @classmethod
+    def _openai_stream(cls, messages):
+        with cls._openai_request(messages, stream=True) as response:
+            for raw_line in response:
+                line = raw_line.decode("utf-8").strip()
+                if not line.startswith("data: "):
+                    continue
+                data = line[6:]
+                if data == "[DONE]":
+                    break
+                chunk = json.loads(data)
+                choices = chunk.get("choices", [])
+                if choices:
+                    piece = choices[0].get("delta", {}).get("content", "")
+                    if isinstance(piece, str) and piece:
+                        yield piece
+
+    @classmethod
+    def _openai_generate(cls, messages):
+        with cls._openai_request(messages, stream=False) as response:
+            result = json.load(response)
+        return result["choices"][0]["message"].get("content", "")
+
     def generate(self, query, retrieved):
         """Non-streaming generation. Returns the full assistant response string."""
         ok, err = self._model_available()
         if not ok:
             return f"\u26a0\ufe0f Backend error: {err}"
 
-        system_prompt = self._build_system_prompt()
-        user_prompt = self._build_user_prompt(query, retrieved)
-
-        messages = [{"role": "system", "content": system_prompt}]
-        messages.extend(self._get_memory_messages())
-        messages.append({"role": "user", "content": user_prompt})
+        messages = self._build_messages(query, retrieved)
 
         try:
-            response = ollama.chat(
-                model=MODEL_NAME,
-                messages=messages,
-                options=OLLAMA_OPTIONS,
-                keep_alive=MODEL_KEEP_ALIVE,
-            )
-            message = self._field(response, "message", {})
-            content = self._field(message, "content", "")
+            if OPENAI_API_KEY:
+                content = self._openai_generate(messages)
+            else:
+                response = ollama.chat(
+                    model=MODEL_NAME,
+                    messages=messages,
+                    options=OLLAMA_OPTIONS,
+                    keep_alive=MODEL_KEEP_ALIVE,
+                )
+                message = self._field(response, "message", {})
+                content = self._field(message, "content", "")
         except Exception as exc:
             content = f"\u26a0\ufe0f Error generating response: {exc}"
         return content
@@ -365,25 +440,25 @@ class YakapBackend:
             self.last_metadata = {"response_time": time.time() - start}
             return
 
-        system_prompt = self._build_system_prompt()
-        user_prompt = self._build_user_prompt(query, retrieved)
-
-        messages = [{"role": "system", "content": system_prompt}]
-        messages.extend(self._get_memory_messages())
-        messages.append({"role": "user", "content": user_prompt})
+        messages = self._build_messages(query, retrieved)
 
         try:
-            stream = ollama.chat(
-                model=MODEL_NAME,
-                messages=messages,
-                stream=True,
-                options=OLLAMA_OPTIONS,
-                keep_alive=MODEL_KEEP_ALIVE,
-            )
             full = []
-            for chunk in stream:
-                message = self._field(chunk, "message", {})
-                piece = self._field(message, "content", "")
+            if OPENAI_API_KEY:
+                pieces = self._openai_stream(messages)
+            else:
+                stream = ollama.chat(
+                    model=MODEL_NAME,
+                    messages=messages,
+                    stream=True,
+                    options=OLLAMA_OPTIONS,
+                    keep_alive=MODEL_KEEP_ALIVE,
+                )
+                pieces = (
+                    self._field(self._field(chunk, "message", {}), "content", "")
+                    for chunk in stream
+                )
+            for piece in pieces:
                 if piece:
                     full.append(piece)
                     yield piece
@@ -401,8 +476,8 @@ class YakapBackend:
         """Process one user message end-to-end:
         1. Emergency guardrail (fixed safety message, no model call).
         2. RAG retrieval (top-3 chunks, when relevant).
-        3. Ollama generation grounded in retrieved context or general knowledge.
-        4. Keep hospital-specific facts grounded in the knowledge base.
+        3. Configured model generation grounded in retrieved context or general knowledge.
+        4. Keep facility-specific facts grounded in the knowledge base.
         5. Update memory and log the interaction to chat_log.csv.
 
         Returns a dict with keys: response, topics, response_time, emergency.
@@ -447,7 +522,7 @@ class YakapBackend:
     def stream_response(self, user_message):
         """Streaming version of get_response. Yields text chunks; after the
         generator is exhausted, self.last_metadata contains the metadata dict.
-        Emergency guardrails are applied before any Ollama call.
+        Emergency guardrails are applied before any model call.
         """
         start = time.time()
         metadata = {
@@ -472,7 +547,7 @@ class YakapBackend:
         retrieved = self.kb.retrieve(user_message, top_k=3)
         metadata["topics"] = [r["topic"] for r in retrieved]
 
-        # Stream from Ollama with retrieved context or general knowledge.
+        # Stream from the configured model with retrieved context or general knowledge.
         collected = []
         for piece in self.stream_generate(user_message, retrieved):
             collected.append(piece)
@@ -496,6 +571,8 @@ class YakapBackend:
 
     def _log(self, question, topics, response, response_time):
         """Append one interaction row to chat_log.csv."""
+        if os.environ.get("VERCEL"):
+            return
         file_exists = os.path.exists(LOG_FILE)
         try:
             with open(LOG_FILE, "a", newline="", encoding="utf-8") as f:
@@ -522,8 +599,8 @@ class YakapBackend:
 # ---------------------------------------------------------------------------
 
 if __name__ == "__main__":
-    bot = YakapBackend()
+    bot = RehabLinkBackend()
     print("Knowledge base chunks indexed:", len(bot.kb.chunks))
-    out = bot.get_response("What are your visiting hours?")
+    out = bot.get_response("What does rehabilitation mean?")
     print("Response:", out["response"][:200], "...")
     print("Topics:", out["topics"], "Time:", out["response_time"])
