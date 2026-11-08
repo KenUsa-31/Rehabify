@@ -44,7 +44,7 @@ MODEL_NAME = os.environ.get(
     "REHABIFY_MODEL",
     os.environ.get("REHABLINK_MODEL", os.environ.get("YAKAP_MODEL", "gpt-oss:20b")),
 )
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "") or os.environ.get("OPENAI_API_KEY", "")
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "AQ.Ab8RN6KDjLpbqFRfRIs_KrKiKIZKRewRZl2uWrBjGSVrFU1ZgA") or os.environ.get("OPENAI_API_KEY", "")
 GEMINI_BASE_URL = os.environ.get(
     "GEMINI_BASE_URL",
     os.environ.get(
